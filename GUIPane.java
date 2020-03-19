@@ -6,10 +6,14 @@
 package guipane;
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTreeCell;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 /**
  * 
@@ -26,7 +30,7 @@ public class GUIPane extends Application {
    public void start(Stage stage) throws Exception {
 
       Scene scene = new Scene(createBorderPane(), 250, 200);
-      stage.setTitle("Layout Demo");
+      stage.setTitle("Gauge/Data Column Selection");
       stage.setScene(scene);
       stage.show();
    }
@@ -52,38 +56,65 @@ public class GUIPane extends Application {
          new SeparatorMenuItem(), new MenuItem("About..."));
       menuBar.getMenus().addAll(fileMenu, editMenu, helpMenu);
 
-      ToolBar toolbar = new ToolBar(new Button("New"),
-         new Button("Open"), new Separator(), new Button("Cut"),
-         new Button("Copy"), new Button("Paste"));
+      //ToolBar toolbar = new ToolBar(new Button("New"), new Button("Open"));
 
       VBox vbox = new VBox();
-      vbox.getChildren().addAll(menuBar, toolbar);
-
-      TreeItem<String> ti = new TreeItem<>("Gauge List");
-      ti.getChildren().addAll(
-         new TreeItem<String>("Bar Plot"),
-         new TreeItem<String>("XY Plot"),
-         new TreeItem<String>("X Plot"),
-         new TreeItem<String>("Circle"),
-         new TreeItem<String>("Number/Single Character"),
-         new TreeItem<String>("Text"),
-         new TreeItem<String>("Clock"),
-         new TreeItem<String>("Stopwatch"),
-         new TreeItem<String>("Running time"),
-         new TreeItem<String>("On/Off Light"));
-                 
       
-      TreeView<String> tv = new TreeView<String>(ti);
+      //add toolbar here if wanted
+      vbox.getChildren().addAll(menuBar);
 
+      CheckBoxTreeItem<String> gaugeRootItem = new CheckBoxTreeItem<>("Gauge List");
+     
+      
+      gaugeRootItem.getChildren().addAll(
+         new CheckBoxTreeItem<String>("Bar Plot"),
+         new CheckBoxTreeItem<String>("XY Plot"),
+         new CheckBoxTreeItem<String>("X Plot"),
+         new CheckBoxTreeItem<String>("Circle"),
+         new CheckBoxTreeItem<String>("Number/Single Character"),
+         new CheckBoxTreeItem<String>("Text"),
+         new CheckBoxTreeItem<String>("Clock"),
+         new CheckBoxTreeItem<String>("Stopwatch"),
+         new CheckBoxTreeItem<String>("Running time"),
+         new CheckBoxTreeItem<String>("On/Off Light"));
+         
+                 
+      final Callback<TreeItem<String>, ObservableValue<Boolean>> getSelectedProperty = 
+              (TreeItem<String> item) -> {
+                  if (item instanceof CheckBoxTreeItem<?>) {
+                      return ((CheckBoxTreeItem<?>)item).selectedProperty();
+                  }
+                  return null;
+              };
+      
+      TreeView<String> tv = new TreeView<String>(gaugeRootItem);
+      
+      tv.setCellFactory(p -> new CheckBoxTreeCell<>(getSelectedProperty));
+      tv.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+      
       TabPane tabPaneLeft = new TabPane();
-      Tab tab1 = new Tab("Gauge List");
+      Tab tab1 = new Tab("Select Gauges");
       tab1.setContent(tv);
-      tabPaneLeft.getTabs().addAll(tab1, new Tab("Explorer"));
+      tabPaneLeft.getTabs().addAll(tab1);
+      
+      //add tree items for data columns 
+      //TODO: make dynamic 
+      CheckBoxTreeItem<String> dataRootItem = new CheckBoxTreeItem<>("Data Columns");
+      dataRootItem.setExpanded(true);
+      
+      dataRootItem.getChildren().addAll(
+         new CheckBoxTreeItem<String>("BATTERY"),
+         new CheckBoxTreeItem<String>("YAW"),
+         new CheckBoxTreeItem<String>("PITCH"),
+         new CheckBoxTreeItem<String>("TIMESTAMP"));
+      
+      TreeView<String> tv2 = new TreeView<String>(dataRootItem);
 
       TabPane tabPaneRight = new TabPane();
-      tabPaneRight.getTabs().addAll(new Tab("Outline"),
-         new Tab("Task List"));
-
+      Tab tab2 = new Tab("Select Data Columns");
+      tab2.setContent(tv2);
+      tabPaneRight.getTabs().addAll(tab2);
+      
       borderPane.setTop(vbox);
       borderPane.setLeft(tabPaneLeft);
       borderPane.setCenter(new TextArea());
