@@ -5,35 +5,75 @@
  */
 package guipane;
 
+//********************
+//APACHE IMPORTS
+//********************
+import org.apache.commons.io.*;
+import org.apache.commons.io.FileUtils.*;
+
+//********************
+//GOOGLE IMPORTS
+//********************
+import com.google.gson.Gson;
+import com.google.gson.*;
+
+//********************
+//JAVA IMPORTS
+//********************
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+//********************
+//JAVAFX IMPORTS
+//********************
 import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBoxTreeItem;
+import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.CheckBoxTreeCell;
-import javafx.scene.layout.*;
+import javafx.scene.image.Image;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.stage.Window;
 import javafx.util.Callback;
 
 /**
  * 
  * @author Alexandra
+ * @author Brendan
  */
 
 public class GUIPane extends Application {
@@ -43,7 +83,7 @@ public class GUIPane extends Application {
    }
 
    @Override
-   public void start(final Stage stage) throws Exception {
+   public void start(Stage stage) throws Exception {
 
       Scene scene = new Scene(createBorderPane(), 1000, 1000);
       stage.setTitle("Gauge/Data Column Selection");
@@ -76,7 +116,7 @@ public class GUIPane extends Application {
 
               //set the extension filters to only .xlsx and .csv files 
               //so only files with these extensions will be visible to the user
-              FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("JSON Files (*.json)");
+              FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Excel/CSV Files (*.xlsx/*.csv)", "*.xlsx", "*.csv");
               fileChooser.getExtensionFilters().add(extFilter);
               
               Stage stage = new Stage();
@@ -106,7 +146,7 @@ public class GUIPane extends Application {
 
               //set the extension filters to only .xlsx and .csv files 
               //so only files with these extensions will be visible to the user
-              FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Excel Files (*.xlsx)", "*.xlsx", "Comma seperated files (*.csv)", "*.csv");
+              FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("JSON Files (*.json)", "*.json");
               fileChooser.getExtensionFilters().add(extFilter);
               
               Stage stage = new Stage();
@@ -128,7 +168,8 @@ public class GUIPane extends Application {
  
       fileMenu.getItems().addAll(newItem,
          new SeparatorMenuItem(), openItem,
-         new MenuItem("Save File"), new MenuItem("Save As..."),
+         new MenuItem("Save File"), new MenuItem("Save As..."), new SeparatorMenuItem(), 
+         new MenuItem("Load File"),
          new SeparatorMenuItem(), exitItem);
       
       //creating the Edit menu
@@ -216,7 +257,6 @@ public class GUIPane extends Application {
       Menu helpMenu = new Menu("Help");
       helpMenu.getItems().addAll(aboutItem, new SeparatorMenuItem(), helpItem);
       
-      
       //add all the menus to the menu bar
       menuBar.getMenus().addAll(fileMenu, editMenu, helpMenu);      
       
@@ -230,35 +270,30 @@ public class GUIPane extends Application {
       CheckBoxTreeItem<String> gaugeRootItem = new CheckBoxTreeItem<>("Gauge List");
       
       gaugeRootItem.getChildren().addAll(
-         new CheckBoxTreeItem<String>("Bar Plot"),
-         new CheckBoxTreeItem<String>("XY Plot"),
-         new CheckBoxTreeItem<String>("X Plot"),
-         new CheckBoxTreeItem<String>("Circle"),
-         new CheckBoxTreeItem<String>("Number/Single Character"),
-         new CheckBoxTreeItem<String>("Text"),
-         new CheckBoxTreeItem<String>("Clock"),
-         new CheckBoxTreeItem<String>("Stopwatch"),
-         new CheckBoxTreeItem<String>("Running time"),
-         new CheckBoxTreeItem<String>("On/Off Light"));
+         new CheckBoxTreeItem<>("Bar Plot"),
+         new CheckBoxTreeItem<>("XY Plot"),
+         new CheckBoxTreeItem<>("X Plot"),
+         new CheckBoxTreeItem<>("Circle"),
+         new CheckBoxTreeItem<>("Number/Single Character"),
+         new CheckBoxTreeItem<>("Text"),
+         new CheckBoxTreeItem<>("Clock"),
+         new CheckBoxTreeItem<>("Stopwatch"),
+         new CheckBoxTreeItem<>("Running time"),
+         new CheckBoxTreeItem<>("On/Off Light"));
          
-                 
-      final Callback<TreeItem<String>, ObservableValue<Boolean>> getSelectedProperty = 
+      
+      TreeView<String> tv = new TreeView<String>(gaugeRootItem);
+      
+            final Callback<TreeItem<String>, ObservableValue<Boolean>> getSelectedProperty = 
               (TreeItem<String> item) -> {
                   if (item instanceof CheckBoxTreeItem<?>) {
                       return ((CheckBoxTreeItem<?>)item).selectedProperty();
                   }
                   return null;
               };
-      
-      TreeView<String> tv = new TreeView<String>(gaugeRootItem);
-      
+            
       tv.setCellFactory(p -> new CheckBoxTreeCell<>(getSelectedProperty));
       tv.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-      
-      TabPane tabPaneLeft = new TabPane();
-      Tab tab1 = new Tab("Select Gauges");
-      tab1.setContent(tv);
-      tabPaneLeft.getTabs().addAll(tab1);
       
       //add tree items for data columns 
       //TODO: make dynamic 
@@ -270,25 +305,66 @@ public class GUIPane extends Application {
          new CheckBoxTreeItem<String>("YAW"),
          new CheckBoxTreeItem<String>("PITCH"),
          new CheckBoxTreeItem<String>("TIMESTAMP"));
-      
+     
+            
       TreeView<String> tv2 = new TreeView<String>(dataRootItem);
+      
+      tv2.setCellFactory(p2 -> new CheckBoxTreeCell<>(getSelectedProperty));
+      tv2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+      
+      //create new tabpane on the left
+      TabPane tabPaneLeft = new TabPane();
+      
+      //set the tabs 
+      Tab gaugeTab = new Tab("Select Gauges");
+      Tab dataTab = new Tab("Select Data Columns");
+      
+      //fill the tabs with content from the checkbox tree view item lists
+      gaugeTab.setContent(tv);
+      dataTab.setContent(tv2);
+              
+      //add the tab pane content to the left tab pane
+      tabPaneLeft.getTabs().addAll(gaugeTab, dataTab);
 
-      TabPane tabPaneRight = new TabPane();
-      Tab tab2 = new Tab("Select Data Columns");
-      tab2.setContent(tv2);
-      tabPaneRight.getTabs().addAll(tab2);
+      //Let's try and create a grid pane for the center
+      GridPane gridPane = new GridPane();
+
+      //Here's where we can set up adding images
+     Image image = new Image("File:images/BarGaugeImageSelection.jpg");
+
+      //Create event handler to insert gauge image into center
+     CheckBoxTreeItem<String> rootItem = new CheckBoxTreeItem<String>("Root");
+        rootItem.setExpanded(true);
+
+        final TreeView<String> tree = new TreeView<String>(gaugeRootItem);
+        tree.setEditable(true);
+
+        tree.setCellFactory(CheckBoxTreeCell.<String> forTreeView());
+
+        for (int i = 0; i < 8; i++) {
+
+            gaugeRootItem.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                System.out.println(gaugeRootItem.getValue() + " selection state: " + newVal);
+            }); 
+        }
       
       borderPane.setTop(vbox);
       borderPane.setLeft(tabPaneLeft);
-      borderPane.setCenter(new TextArea());
-      borderPane.setRight(tabPaneRight);
+      borderPane.setCenter(gridPane); 
+      //borderPane.setCenter(new TextArea());
+      //borderPane.setRight(tabPaneRight);
       borderPane.setBottom(new Label("Status text: Gauge/Data Column Selection"));
 
      return borderPane;
    }
+}
+
+//***********************
+//  VENTURE BEHIND THIS POINT AND RISK THY SANITY
+//  PROCEED AT THY OWN RISK
+//***********************
 
 //loading function 
-   
   /* 
 private void load(ObservableList<Node> children)
 {
@@ -314,9 +390,38 @@ private void load(ObservableList<Node> children)
             }
         }
     }
-*/
+
    
-   //TODO: create a save function
-   
-   //TODO: create a values function to store the UI element values
+private void Save(ObservableList<Node> children) {
+    FileChooser fileChooser = new FileChooser();
+    fileChooser.setTitle("Save file:");
+    
+    File file = fileChooser.showSaveDialog(new Stage());
+    if (file != null) {
+        Values values = new Values();
+        children.stream().filter(child -> child.getId() != null)
+                .forEach(child -> { 
+                    if (child instanceof gaugeRootItem) {
+                        gaugeItem gaugecheck = (CheckBoxTreeItem) child; 
+                        values.setGaugeBox(gaugecheck.getSelected()); 
+                    } else if (child instanceof dataRootItem) {
+                        dataRootItem datacheck = (CheckBoxTreeItem) child; 
+                        values.setDataBox(datacheck.getSelected());
+                    }
+                });
+        try {
+            org.apache.commons.io.FileUtils.write(file, new Gson().toJson(values), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            //handle properly 
+        }
+    }
 }
+ 
+private static class Values {
+    private CheckBoxTreeItem<String> gaugeItem = new CheckBoxTreeItem<>("Gauge List");
+    private CheckBoxTreeItem<String> dataItem = new CheckBoxTreeItem<>("Gauge List");
+
+    public CheckBoxTreeItem<String> 
+}
+*/
+
