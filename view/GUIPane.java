@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package guipane;
+package view;
 
 //********************
 //APACHE IMPORTS
@@ -98,7 +98,15 @@ import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import javafx.util.converter.DoubleStringConverter;
-import jfxtras.labs.scene.control.gauge.Gauge;
+
+import eu.hansolo.medusa.*;
+import eu.hansolo.*;
+import eu.hansolo.medusa.skins.ClockSkin;
+import eu.hansolo.medusa.skins.GaugeSkin;
+import eu.hansolo.medusa.skins.LcdClockSkin;
+import eu.hansolo.medusa.skins.ModernSkin;
+import eu.hansolo.medusa.skins.PlainClockSkin;
+import eu.hansolo.medusa.skins.SlimClockSkin;
 
 /**
  *
@@ -467,7 +475,25 @@ public class GUIPane extends Application {
 
         //adding the chart to grid pane 
         gridPane.add(linePlot, 1, 0);
-
+        
+        //creating a new clock
+        Clock clock = new Clock();
+        
+        clock.setSkin(new SlimClockSkin(clock));
+        
+        //TODO: make dynamic
+        clock.setTitle("Speedometer");
+        //gauge.setUnit("MPH");
+        
+        //adding the clock to grid pane 
+        gridPane.add(clock, 1, 1);
+        
+        //creating a new speedometer 
+        Gauge gauge = new Gauge();
+        gauge.setSkin(new GaugeSkin(gauge));
+        
+        gridPane.add(gauge, 1, 2);
+        
         //adding a single character display to the grid pane
         TextArea tf = new TextArea();
         PseudoClass centered = PseudoClass.getPseudoClass("centered");
