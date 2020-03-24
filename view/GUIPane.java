@@ -28,6 +28,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -40,6 +41,7 @@ import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
@@ -61,6 +63,8 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.CheckBoxTreeCell;
@@ -80,12 +84,15 @@ import javafx.scene.shape.Path;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
+import javafx.util.converter.DoubleStringConverter;
 
 /**
  *
@@ -104,6 +111,8 @@ public class GUIPane extends Application {
         BorderPane borderPane = new BorderPane();
 
         Scene scene = new Scene(createBorderPane(borderPane.getChildren()), 1000, 1000);
+        scene.getStylesheets().add("/guipane/css/styles.css");
+        
         stage.setTitle("Gauge/Data Column Selection");
         stage.setScene(scene);
         stage.show();
@@ -324,10 +333,8 @@ public class GUIPane extends Application {
                 new CheckBoxTreeItem<String>("TIMESTAMP"));
 
         //TreeView<String> tv2 = new TreeView<>(dataRootItem);
-
         //tv2.setCellFactory(p2 -> new CheckBoxTreeCell<>(getSelectedProperty));
         //tv2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
         dataRootItem.addEventHandler(
                 CheckBoxTreeItem.<Path>checkBoxSelectionChangedEvent(),
                 (TreeModificationEvent<Path> e) -> {
@@ -338,10 +345,10 @@ public class GUIPane extends Application {
                         System.out.println("Some items are unchecked");
                     }
                 });
-        
+
         TreeView<String> tv2 = new TreeView<>(dataRootItem);
         tv2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        
+
         //create new tabpane on the left
         TabPane tabPaneLeft = new TabPane();
 
@@ -367,7 +374,7 @@ public class GUIPane extends Application {
 
         gridPane.setPrefSize(500, 250);
         gridPane.setGridLinesVisible(true);
-        
+
         //setting the column constraints
         ColumnConstraints column1width = new ColumnConstraints(250);
         ColumnConstraints column2width = new ColumnConstraints(250);
@@ -378,9 +385,9 @@ public class GUIPane extends Application {
         RowConstraints row2Height = new RowConstraints(285);
         RowConstraints row3Height = new RowConstraints(285);
 
-        gridPane.getColumnConstraints().addAll(column1width,column2width, column3width);
+        gridPane.getColumnConstraints().addAll(column1width, column2width, column3width);
         gridPane.getRowConstraints().addAll(row1Height, row2Height, row3Height);
-        
+
         //Here's where we can set up adding images
         Image barImage = new Image("File:images/BarGauge.jpg");
 
@@ -390,9 +397,45 @@ public class GUIPane extends Application {
 
         //adding text area to the grid pane
         TextArea ta = new TextArea();
+
+        //adding the BarGauge to the grid display 
+        //BarGauge barPlot = new BarGauge();
+        //gridPane.add(barPlot, 0, 1);
+        
+        //adding a single character display to the grid pane
+        TextArea tf = new TextArea();
+        PseudoClass centered = PseudoClass.getPseudoClass("centered");
+        
+        Pattern validDoubleText = Pattern.compile("-?((\\d*)|(\\d+\\.\\d*))");
+
+        TextFormatter<Double> textFormatter = new TextFormatter<Double>(new DoubleStringConverter(), 0.0,
+                change -> {
+                    String newText = change.getControlNewText();
+                    if (validDoubleText.matcher(newText).matches()) {
+                        return change;
+                    } else {
+                        return null;
+                    }
+                });
+
+        tf.setTextFormatter(textFormatter);
+
+        textFormatter.valueProperty().addListener((obs, oldValue, newValue) -> {
+            System.out.println("New double value " + newValue);
+        });
+        
+        tf.setFont(Font.font ("times new roman", 70)); //setting the font and font size
+        
+        ToggleButton centerText = new ToggleButton("Center All Text");
+        
+        centerText.selectedProperty().addListener((obs, wasCentered, isNowCentered) -> 
+                tf.pseudoClassStateChanged(centered, isNowCentered));
+        
+        centerText.selectedProperty().addListener((obs, wasCentered, isNowCentered) -> 
+                ta.pseudoClassStateChanged(centered, isNowCentered));
+                
+        gridPane.add(tf, 0, 1);
         gridPane.add(ta, 0, 0);
-        
-        
         
         //Create event handler to insert gauge image into center
         CheckBoxTreeItem<String> rootItem = new CheckBoxTreeItem<String>("Root");
@@ -555,7 +598,7 @@ public class GUIPane extends Application {
         //TODO: add time listener to timestamp cell in spreadsheet
         //TODO: add updateValues() method 
         //add buttons to the playback menu
-        playbackMenu.getChildren().addAll(reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton, timeStamp);
+        playbackMenu.getChildren().addAll(reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton, timeStamp, centerText);
 
         //************************
         //BORDER PANE SETUP 
