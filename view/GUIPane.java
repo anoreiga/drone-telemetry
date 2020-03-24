@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package view;
+package guipane;
 
 //********************
 //APACHE IMPORTS
@@ -42,6 +42,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -377,16 +378,22 @@ public class GUIPane extends Application {
         RowConstraints row2Height = new RowConstraints(285);
         RowConstraints row3Height = new RowConstraints(285);
 
-
         gridPane.getColumnConstraints().addAll(column1width,column2width, column3width);
         gridPane.getRowConstraints().addAll(row1Height, row2Height, row3Height);
         
         //Here's where we can set up adding images
-        //Image barImage = new Image("File:images/BarGaugeImageSelection.jpg");
+        Image barImage = new Image("File:images/BarGauge.jpg");
 
-        //init ImageView to display image within the grid pane 
+        //init ImageView to display image within the grid pane
+        gridPane.add(new ImageView(barImage), 1, 1);
         //gridPane.getChildren().add(new ImageView(barImage));
 
+        //adding text area to the grid pane
+        TextArea ta = new TextArea();
+        gridPane.add(ta, 0, 0);
+        
+        
+        
         //Create event handler to insert gauge image into center
         CheckBoxTreeItem<String> rootItem = new CheckBoxTreeItem<String>("Root");
         rootItem.setExpanded(true);
