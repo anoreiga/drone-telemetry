@@ -68,8 +68,10 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -359,13 +361,31 @@ public class GUIPane extends Application {
         //Let's try and create a grid pane for the center
         GridPane gridPane = new GridPane();
         //setting grid pane lines visible 
-        gridPane.setGridLinesVisible(true);
+        gridPane.setLayoutX(100);
+        gridPane.setLayoutY(100);
 
+        gridPane.setPrefSize(500, 250);
+        gridPane.setGridLinesVisible(true);
+        
+        //setting the column constraints
+        ColumnConstraints column1width = new ColumnConstraints(250);
+        ColumnConstraints column2width = new ColumnConstraints(250);
+        ColumnConstraints column3width = new ColumnConstraints(250);
+
+        //setting the row constraints
+        RowConstraints row1Height = new RowConstraints(285);
+        RowConstraints row2Height = new RowConstraints(285);
+        RowConstraints row3Height = new RowConstraints(285);
+
+
+        gridPane.getColumnConstraints().addAll(column1width,column2width, column3width);
+        gridPane.getRowConstraints().addAll(row1Height, row2Height, row3Height);
+        
         //Here's where we can set up adding images
-        Image barImage = new Image("File:images/BarGaugeImageSelection.jpg");
+        //Image barImage = new Image("File:images/BarGaugeImageSelection.jpg");
 
         //init ImageView to display image within the grid pane 
-        gridPane.getChildren().add(new ImageView(barImage));
+        //gridPane.getChildren().add(new ImageView(barImage));
 
         //Create event handler to insert gauge image into center
         CheckBoxTreeItem<String> rootItem = new CheckBoxTreeItem<String>("Root");
