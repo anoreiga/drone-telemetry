@@ -49,6 +49,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBoxTreeItem;
+import javafx.scene.control.CheckBoxTreeItem.TreeModificationEvent;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -72,6 +73,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Path;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.Text;
@@ -313,16 +315,30 @@ public class GUIPane extends Application {
         dataRootItem.setExpanded(true);
 
         dataRootItem.getChildren().addAll(
-                new CheckBoxTreeItem<>("BATTERY"),
-                new CheckBoxTreeItem<>("YAW"),
-                new CheckBoxTreeItem<>("PITCH"),
-                new CheckBoxTreeItem<>("TIMESTAMP"));
+                new CheckBoxTreeItem<String>("BATTERY"),
+                new CheckBoxTreeItem<String>("YAW"),
+                new CheckBoxTreeItem<String>("PITCH"),
+                new CheckBoxTreeItem<String>("TIMESTAMP"));
 
+        //TreeView<String> tv2 = new TreeView<>(dataRootItem);
+
+        //tv2.setCellFactory(p2 -> new CheckBoxTreeCell<>(getSelectedProperty));
+        //tv2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        dataRootItem.addEventHandler(
+                CheckBoxTreeItem.<Path>checkBoxSelectionChangedEvent(),
+                (TreeModificationEvent<Path> e) -> {
+                    CheckBoxTreeItem<Path> item = e.getTreeItem();
+                    if (item.isSelected() || item.isIndeterminate()) {
+                        System.out.println("Some items are checked");
+                    } else {
+                        System.out.println("Some items are unchecked");
+                    }
+                });
+        
         TreeView<String> tv2 = new TreeView<>(dataRootItem);
-
-        tv2.setCellFactory(p2 -> new CheckBoxTreeCell<>(getSelectedProperty));
         tv2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
+        
         //create new tabpane on the left
         TabPane tabPaneLeft = new TabPane();
 
@@ -342,6 +358,8 @@ public class GUIPane extends Application {
         //********************************
         //Let's try and create a grid pane for the center
         GridPane gridPane = new GridPane();
+        //setting grid pane lines visible 
+        gridPane.setGridLinesVisible(true);
 
         //Here's where we can set up adding images
         Image barImage = new Image("File:images/BarGaugeImageSelection.jpg");
@@ -483,11 +501,11 @@ public class GUIPane extends Application {
 
         //time label 
         long endTime = 100000;
-        
+
         Label timeStamp = new Label();
         timeStamp.setTextFill(Color.YELLOW);
-        timeStamp.setPrefWidth(80);  
-        
+        timeStamp.setPrefWidth(80);
+
         DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
         final Timeline timeline = new Timeline(
                 new KeyFrame(
