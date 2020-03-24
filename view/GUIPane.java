@@ -50,6 +50,10 @@ import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBoxTreeItem;
 import javafx.scene.control.CheckBoxTreeItem.TreeModificationEvent;
@@ -112,8 +116,9 @@ public class GUIPane extends Application {
 
         Scene scene = new Scene(createBorderPane(borderPane.getChildren()), 1000, 1000);
         scene.getStylesheets().add("/guipane/css/styles.css");
-        
+
         stage.setTitle("Gauge/Data Column Selection");
+
         stage.setScene(scene);
         stage.show();
 
@@ -400,12 +405,51 @@ public class GUIPane extends Application {
 
         //adding the BarGauge to the grid display 
         //BarGauge barPlot = new BarGauge();
-        //gridPane.add(barPlot, 0, 1);
+        //gridPane.add(new BarGauge(barPlot), 0, 1);
+        //x and y axis
         
+        final String A = "Height [h]";
+        final String B = "Horizontal Speed [m/h]";
+        final String C = "Vertical Speed [m/v]";
+        
+        final NumberAxis x = new NumberAxis();
+        final CategoryAxis y = new CategoryAxis();
+//create bar chart
+        final BarChart<Number, String> b
+                = new BarChart<Number, String>(x, y);
+        b.setTitle("Flight Data (Units: Metric)");
+//set title for x axis
+        x.setLabel("Category");
+        x.setTickLabelRotation(90);
+//set title for y axis
+        y.setLabel("Measurement");
+//dataset on 1999
+        XYChart.Series s1 = new XYChart.Series();
+        s1.setName("Height [h]");
+        s1.getData().add(new XYChart.Data(10, A));
+        s1.getData().add(new XYChart.Data(60, B));
+        s1.getData().add(new XYChart.Data(30, C));
+//dataset on 2009
+        XYChart.Series s2 = new XYChart.Series();
+        s2.setName("Horizontal Speed [m/h]");
+        s2.getData().add(new XYChart.Data(50, A));
+        s2.getData().add(new XYChart.Data(30, C));
+        s2.getData().add(new XYChart.Data(20, B));
+//dataset on 2019
+        XYChart.Series S3 = new XYChart.Series();
+        S3.setName("Vertical Speed [m/v]");
+        S3.getData().add(new XYChart.Data(70, A));
+        S3.getData().add(new XYChart.Data(25, B));
+        S3.getData().add(new XYChart.Data(5, C));
+        
+        b.getData().addAll(s1, s2, S3);
+        
+        gridPane.add(b, 0, 2);
+
         //adding a single character display to the grid pane
         TextArea tf = new TextArea();
         PseudoClass centered = PseudoClass.getPseudoClass("centered");
-        
+
         Pattern validDoubleText = Pattern.compile("-?((\\d*)|(\\d+\\.\\d*))");
 
         TextFormatter<Double> textFormatter = new TextFormatter<Double>(new DoubleStringConverter(), 0.0,
@@ -423,20 +467,20 @@ public class GUIPane extends Application {
         textFormatter.valueProperty().addListener((obs, oldValue, newValue) -> {
             System.out.println("New double value " + newValue);
         });
-        
-        tf.setFont(Font.font ("times new roman", 70)); //setting the font and font size
-        
+
+        tf.setFont(Font.font("times new roman", 70)); //setting the font and font size
+
         ToggleButton centerText = new ToggleButton("Center All Text");
-        
-        centerText.selectedProperty().addListener((obs, wasCentered, isNowCentered) -> 
-                tf.pseudoClassStateChanged(centered, isNowCentered));
-        
-        centerText.selectedProperty().addListener((obs, wasCentered, isNowCentered) -> 
-                ta.pseudoClassStateChanged(centered, isNowCentered));
-                
+
+        centerText.selectedProperty().addListener((obs, wasCentered, isNowCentered)
+                -> tf.pseudoClassStateChanged(centered, isNowCentered));
+
+        centerText.selectedProperty().addListener((obs, wasCentered, isNowCentered)
+                -> ta.pseudoClassStateChanged(centered, isNowCentered));
+
         gridPane.add(tf, 0, 1);
         gridPane.add(ta, 0, 0);
-        
+
         //Create event handler to insert gauge image into center
         CheckBoxTreeItem<String> rootItem = new CheckBoxTreeItem<String>("Root");
         rootItem.setExpanded(true);
