@@ -52,6 +52,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
@@ -97,6 +98,7 @@ import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import javafx.util.converter.DoubleStringConverter;
+import jfxtras.labs.scene.control.gauge.Gauge;
 
 /**
  *
@@ -393,25 +395,15 @@ public class GUIPane extends Application {
         gridPane.getColumnConstraints().addAll(column1width, column2width, column3width);
         gridPane.getRowConstraints().addAll(row1Height, row2Height, row3Height);
 
-        //Here's where we can set up adding images
-        Image barImage = new Image("File:images/BarGauge.jpg");
-
-        //init ImageView to display image within the grid pane
-        gridPane.add(new ImageView(barImage), 1, 1);
-        //gridPane.getChildren().add(new ImageView(barImage));
-
         //adding text area to the grid pane
         TextArea ta = new TextArea();
 
         //adding the BarGauge to the grid display 
-        //BarGauge barPlot = new BarGauge();
-        //gridPane.add(new BarGauge(barPlot), 0, 1);
         //x and y axis
-        
         final String A = "Height [h]";
         final String B = "Horizontal Speed [m/h]";
         final String C = "Vertical Speed [m/v]";
-        
+
         final NumberAxis x = new NumberAxis();
         final CategoryAxis y = new CategoryAxis();
 //create bar chart
@@ -441,10 +433,40 @@ public class GUIPane extends Application {
         S3.getData().add(new XYChart.Data(70, A));
         S3.getData().add(new XYChart.Data(25, B));
         S3.getData().add(new XYChart.Data(5, C));
-        
+
         b.getData().addAll(s1, s2, S3);
-        
+
         gridPane.add(b, 0, 2);
+
+        //adding a line chart display to the grid pane 
+        //defining the x axis
+        NumberAxis lineX = new NumberAxis(1960, 2020, 10);
+        lineX.setLabel("Years");
+
+        //defining the y axis 
+        NumberAxis lineY = new NumberAxis(0, 350, 50);
+        lineY.setLabel("No. of schools");
+
+        //creating the line chart 
+        LineChart linePlot = new LineChart(lineX, lineY);
+
+        //setting the chart data 
+        //TODO: make dynamic 
+        XYChart.Series series = new XYChart.Series();
+        series.setName("No of schools in a year");
+
+        series.getData().add(new XYChart.Data(1970, 15));
+        series.getData().add(new XYChart.Data(1980, 30));
+        series.getData().add(new XYChart.Data(1990, 60));
+        series.getData().add(new XYChart.Data(2000, 120));
+        series.getData().add(new XYChart.Data(2013, 240));
+        series.getData().add(new XYChart.Data(2014, 300));
+
+        //setting the data to line chart 
+        linePlot.getData().add(series);
+
+        //adding the chart to grid pane 
+        gridPane.add(linePlot, 1, 0);
 
         //adding a single character display to the grid pane
         TextArea tf = new TextArea();
