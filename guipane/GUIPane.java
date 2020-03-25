@@ -9,13 +9,12 @@ package guipane;
 //APACHE IMPORTS
 //********************
 import org.apache.commons.io.*;
-import org.apache.commons.io.FileUtils.*;
 
 //********************
 //GOOGLE IMPORTS
 //********************
 import com.google.gson.Gson;
-import com.google.gson.*;
+import com.thoughtworks.xstream.XStream;
 
 //********************
 //JAVA IMPORTS
@@ -23,9 +22,14 @@ import com.google.gson.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.charset.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 
 //********************
 //JAVAFX IMPORTS
@@ -35,15 +39,21 @@ import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBoxTreeItem;
+import javafx.scene.control.CheckBoxTreeItem.TreeModificationEvent;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -53,7 +63,8 @@ import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.CheckBoxTreeCell;
@@ -62,11 +73,13 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Path;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.Text;
@@ -75,6 +88,23 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Callback;
+import javafx.util.Duration;
+import javafx.util.converter.DoubleStringConverter;
+
+//********************
+//MEDUSA IMPORTS
+//********************
+import eu.hansolo.medusa.*;
+import eu.hansolo.medusa.skins.GaugeSkin;
+import eu.hansolo.medusa.skins.PlainClockSkin;
+import eu.hansolo.medusa.skins.SlimSkin;
+
+//********************
+//JAVA IMPORTS
+//********************
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  *
@@ -82,24 +112,35 @@ import javafx.util.Callback;
  * @author Brendan
  */
 public class GUIPane extends Application {
+    
+    private String[] cells = new String[9];
+    private HashMap<String, Object> nodes = new HashMap<>();
+    private GridPane gridPane = null;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) { 
+
         Application.launch(args);
     }
 
     @Override
     public void start(Stage stage) throws Exception {
 
-        Scene scene = new Scene(createBorderPane(), 1000, 1000);
+        BorderPane borderPane = new BorderPane();
+
+        Scene scene = new Scene(createBorderPane(borderPane.getChildren()), 1000, 1000);
+        scene.getStylesheets().add("/guipane/css/styles.css");
+
         stage.setTitle("Gauge/Data Column Selection");
+
         stage.setScene(scene);
         stage.show();
 
     }
 
-    public BorderPane createBorderPane() {
+    public BorderPane createBorderPane(ObservableList<Node> children) {
 
         BorderPane borderPane = new BorderPane();
+        borderPane.setId("borderpane");
 
         //creating the menubar
         MenuBar menuBar = new MenuBar();
@@ -167,10 +208,30 @@ public class GUIPane extends Application {
         MenuItem exitItem = new MenuItem("Exit");
         exitItem.setOnAction(e -> Platform.exit());
 
-        fileMenu.getItems().addAll(newItem,
-                new SeparatorMenuItem(), openItem,
-                new MenuItem("Save File"), new MenuItem("Save As..."), new SeparatorMenuItem(),
-                new MenuItem("Load File"),
+        //creating the save file initial functionality 
+        MenuItem saveItem = new MenuItem("Save File");
+
+        saveItem.setOnAction(e -> {
+            try {
+                saveFile(children);
+            } catch (IOException ex) {
+                Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        
+        //creating the load file initial functionality 
+        MenuItem loadItem = new MenuItem("Load File");
+        
+        loadItem.setOnAction(e -> {
+            try {
+                loadFile(children);
+            } catch (IOException ex) {
+                Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        
+        fileMenu.getItems().addAll(newItem, openItem,
+                new SeparatorMenuItem(), saveItem, loadItem,
                 new SeparatorMenuItem(), exitItem);
 
         //creating the Edit menu
@@ -245,7 +306,6 @@ public class GUIPane extends Application {
                 popupHelp.showAndWait();
 
             }
-
         });
 
         //creating the Help menu
@@ -294,14 +354,26 @@ public class GUIPane extends Application {
         dataRootItem.setExpanded(true);
 
         dataRootItem.getChildren().addAll(
-                new CheckBoxTreeItem<>("BATTERY"),
-                new CheckBoxTreeItem<>("YAW"),
-                new CheckBoxTreeItem<>("PITCH"),
-                new CheckBoxTreeItem<>("TIMESTAMP"));
+                new CheckBoxTreeItem<String>("BATTERY"),
+                new CheckBoxTreeItem<String>("YAW"),
+                new CheckBoxTreeItem<String>("PITCH"),
+                new CheckBoxTreeItem<String>("TIMESTAMP"));
+
+        //TreeView<String> tv2 = new TreeView<>(dataRootItem);
+        //tv2.setCellFactory(p2 -> new CheckBoxTreeCell<>(getSelectedProperty));
+        //tv2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        dataRootItem.addEventHandler(
+                CheckBoxTreeItem.<Path>checkBoxSelectionChangedEvent(),
+                (TreeModificationEvent<Path> e) -> {
+                    CheckBoxTreeItem<Path> item = e.getTreeItem();
+                    if (item.isSelected() || item.isIndeterminate()) {
+                        System.out.println("Some items are checked");
+                    } else {
+                        System.out.println("Some items are unchecked");
+                    }
+                });
 
         TreeView<String> tv2 = new TreeView<>(dataRootItem);
-
-        tv2.setCellFactory(p2 -> new CheckBoxTreeCell<>(getSelectedProperty));
         tv2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         //create new tabpane on the left
@@ -318,12 +390,177 @@ public class GUIPane extends Application {
         //add the tab pane content to the left tab pane
         tabPaneLeft.getTabs().addAll(gaugeTab, dataTab);
 
+        //********************************
+        //GRID PANE 
+        //********************************
         //Let's try and create a grid pane for the center
-        GridPane gridPane = new GridPane();
+        gridPane = new GridPane();
+        //setting grid pane lines visible 
+        gridPane.setLayoutX(100);
+        gridPane.setLayoutY(100);
 
-        //Here's where we can set up adding images
-        Image image = new Image("File:images/BarGaugeImageSelection.jpg");
+        gridPane.setPrefSize(500, 250);
+        gridPane.setGridLinesVisible(true);
 
+        //setting the column constraints
+        ColumnConstraints column1width = new ColumnConstraints(250);
+        ColumnConstraints column2width = new ColumnConstraints(250);
+        ColumnConstraints column3width = new ColumnConstraints(250);
+
+        //setting the row constraints
+        RowConstraints row1Height = new RowConstraints(285);
+        RowConstraints row2Height = new RowConstraints(285);
+        RowConstraints row3Height = new RowConstraints(285);
+
+        gridPane.getColumnConstraints().addAll(column1width, column2width, column3width);
+        gridPane.getRowConstraints().addAll(row1Height, row2Height, row3Height);
+
+        //adding text area to the grid pane
+        TextArea ta = new TextArea();
+
+        //adding the BarGauge to the grid display 
+        //x and y axis
+        final String A = "Height [h]";
+        final String B = "Horizontal Speed [m/h]";
+        final String C = "Vertical Speed [m/v]";
+
+        final NumberAxis x = new NumberAxis();
+        final CategoryAxis y = new CategoryAxis();
+//create bar chart
+        final BarChart<Number, String> b
+                = new BarChart<Number, String>(x, y);
+        b.setTitle("Flight Data (Units: Metric)");
+//set title for x axis
+        x.setLabel("Category");
+        x.setTickLabelRotation(90);
+//set title for y axis
+        y.setLabel("Measurement");
+//dataset on 1999
+        XYChart.Series s1 = new XYChart.Series();
+        s1.setName("Height [h]");
+        s1.getData().add(new XYChart.Data(10, A));
+        s1.getData().add(new XYChart.Data(60, B));
+        s1.getData().add(new XYChart.Data(30, C));
+//dataset on 2009
+        XYChart.Series s2 = new XYChart.Series();
+        s2.setName("Horizontal Speed [m/h]");
+        s2.getData().add(new XYChart.Data(50, A));
+        s2.getData().add(new XYChart.Data(30, C));
+        s2.getData().add(new XYChart.Data(20, B));
+//dataset on 2019
+        XYChart.Series S3 = new XYChart.Series();
+        S3.setName("Vertical Speed [m/v]");
+        S3.getData().add(new XYChart.Data(70, A));
+        S3.getData().add(new XYChart.Data(25, B));
+        S3.getData().add(new XYChart.Data(5, C));
+
+        b.getData().addAll(s1, s2, S3);
+
+        gridPane.add(b, 0, 2);
+        cells[2] = "bar";
+        nodes.put("bar", b);
+
+        //adding a line chart display to the grid pane 
+        //defining the x axis
+        NumberAxis lineX = new NumberAxis(1960, 2020, 10);
+        lineX.setLabel("Years");
+
+        //defining the y axis 
+        NumberAxis lineY = new NumberAxis(0, 350, 50);
+        lineY.setLabel("No. of schools");
+
+        //creating the line chart 
+        LineChart linePlot = new LineChart(lineX, lineY);
+
+        //setting the chart data 
+        //TODO: make dynamic 
+        XYChart.Series series = new XYChart.Series();
+        series.setName("No of schools in a year");
+
+        series.getData().add(new XYChart.Data(1970, 15));
+        series.getData().add(new XYChart.Data(1980, 30));
+        series.getData().add(new XYChart.Data(1990, 60));
+        series.getData().add(new XYChart.Data(2000, 120));
+        series.getData().add(new XYChart.Data(2013, 240));
+        series.getData().add(new XYChart.Data(2014, 300));
+
+        //setting the data to line chart 
+        linePlot.getData().add(series);
+
+        //adding the chart to grid pane 
+        gridPane.add(linePlot, 1, 0);
+        cells[3] = "line";
+        nodes.put("line", linePlot);
+        //creating a new clock
+        Clock clock = new Clock();
+
+        clock.setSkin(new PlainClockSkin(clock));
+
+        //TODO: make dynamic
+        clock.setTitle("Speedometer");
+        //gauge.setUnit("MPH");
+
+        //adding the clock to grid pane 
+        gridPane.add(clock, 1, 1);
+        cells[4] = "clock";
+        nodes.put("clock", clock);
+        
+        //adding a circle gauge
+        Gauge circle = new Gauge();
+        circle.setSkin(new SlimSkin(circle));
+
+        gridPane.add(circle, 2, 0);
+        cells[6] = "circle";
+        nodes.put("circle", circle);
+
+        //creating a new speedometer 
+        Gauge gauge = new Gauge();
+        gauge.setSkin(new GaugeSkin(gauge));
+
+        gridPane.add(gauge, 1, 2);
+        cells[5] = "gauge";
+        nodes.put("gauge", gauge);
+
+        //adding a single character display to the grid pane
+        TextArea tf = new TextArea();
+        PseudoClass centered = PseudoClass.getPseudoClass("centered");
+
+        Pattern validDoubleText = Pattern.compile("-?((\\d*)|(\\d+\\.\\d*))");
+
+        TextFormatter<Double> textFormatter = new TextFormatter<Double>(new DoubleStringConverter(), 0.0,
+                change -> {
+                    String newText = change.getControlNewText();
+                    if (validDoubleText.matcher(newText).matches()) {
+                        return change;
+                    } else {
+                        return null;
+                    }
+                });
+
+        tf.setTextFormatter(textFormatter);
+
+        textFormatter.valueProperty().addListener((obs, oldValue, newValue) -> {
+            System.out.println("New double value " + newValue);
+        });
+
+        tf.setFont(Font.font("times new roman", 70)); //setting the font and font size
+
+        ToggleButton centerText = new ToggleButton("Center All Text");
+
+        centerText.selectedProperty().addListener((obs, wasCentered, isNowCentered)
+                -> tf.pseudoClassStateChanged(centered, isNowCentered));
+
+        centerText.selectedProperty().addListener((obs, wasCentered, isNowCentered)
+                -> ta.pseudoClassStateChanged(centered, isNowCentered));
+
+        gridPane.add(tf, 0, 1);
+        cells[1] = "tf";
+        nodes.put("tf", tf);
+        
+        gridPane.add(ta, 0, 0);
+        cells[0] = "ta";
+        nodes.put("ta", ta);
+        
         //Create event handler to insert gauge image into center
         CheckBoxTreeItem<String> rootItem = new CheckBoxTreeItem<String>("Root");
         rootItem.setExpanded(true);
@@ -340,6 +577,10 @@ public class GUIPane extends Application {
             });
         }
 
+        //*****************************************
+        //PLAYBACK BUTTONS 
+        //TODO: place into seperate function 
+        //*****************************************
         //setting the dropshadow effect for the playback buttons
         DropShadow dropshadow = new DropShadow();
         dropshadow.setOffsetY(5.0);
@@ -452,9 +693,40 @@ public class GUIPane extends Application {
             oneXButton.setStyle("-fx-background-color: Black");
         });
 
-        //add buttons to the playback menu
-        playbackMenu.getChildren().addAll(reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton);
+        //time label 
+        long endTime = 100000;
 
+        Label timeStamp = new Label();
+        timeStamp.setTextFill(Color.YELLOW);
+        timeStamp.setPrefWidth(80);
+
+        DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+        final Timeline timeline = new Timeline(
+                new KeyFrame(
+                        Duration.millis(500),
+                        event -> {
+                            final long diff = endTime - System.currentTimeMillis();
+                            if (diff < 0) {
+                                //  timeLabel.setText( "00:00:00" );
+                                timeStamp.setText(timeFormat.format(0));
+                            } else {
+                                timeStamp.setText(timeFormat.format(diff));
+                            }
+                        }
+                )
+        );
+        timeline.setCycleCount(Animation.INDEFINITE);
+        timeline.play();
+
+        //display the current time property
+        //TODO: add time listener to timestamp cell in spreadsheet
+        //TODO: add updateValues() method 
+        //add buttons to the playback menu
+        playbackMenu.getChildren().addAll(reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton, timeStamp, centerText);
+
+        //************************
+        //BORDER PANE SETUP 
+        //************************
         //setting up the border pane
         borderPane.setTop(vbox);
         borderPane.setLeft(tabPaneLeft);
@@ -465,69 +737,72 @@ public class GUIPane extends Application {
 
         return borderPane;
     }
-}
 
 //***********************
 //  VENTURE BEHIND THIS POINT AND RISK THY SANITY
 //  PROCEED AT THY OWN RISK
 //***********************
-//loading function 
-/* 
-private void load(ObservableList<Node> children)
-{
-    FileChooser fileChooser = new FileChooser();
-    fileChooser.setTitle("Load File:");
+//saving function 
     
-    File file = fileChooser.showOpenDialog(new Stage());
-    if (file != null) {
-        
-        try {
-            Values values = new Gson().fromJson(org.apache.commons.io.FileUtils.readFileToString(file, StandardCharsets.UTF_8), Values.class);
-            children.stream().filter(child -> child.getId() != null)
-                    .forEach(child -> { 
-                        TextField field = (TextField) child; 
-                        field.setText(values.getFieldTest());
-                    } else if (child instanceof CheckBoxTreeItem) {
-                            CheckBoxTreeItem area = (CheckBoxTreeItem) child; 
-                            area.setText(values.getAreaText());
-                            }
-        });
-    } catch (IOException e) {
-            //handle exception 
+    
+    private void saveFile(ObservableList<Node> children) throws IOException {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Current Layout");
+
+        File file = fileChooser.showSaveDialog(new Stage());
+        if (file != null) {
+            Values values = new Values();
+            
+            String charsetAsString = String.valueOf(StandardCharsets.UTF_8);
+            try {
+                XStream xstream = new XStream();
+                String output = xstream.toXML(values.getCells());
+                FileUtils.writeStringToFile(file, output, charsetAsString);
+            } catch (IOException ex) {
+                Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+    
+       private void loadFile(ObservableList<Node> children) throws IOException {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Load Previous Layout");
+        File file = fileChooser.showOpenDialog(new Stage());
+        if (file != null) {
+            // handle properly
+            
+            String charsetAsString = String.valueOf(StandardCharsets.UTF_8);
+            
+            XStream xstream = new XStream();
+                        
+            String[] arr = (String[]) xstream.fromXML(file);
+            
+            Iterator mapIter = nodes.entrySet().iterator();
+            while(mapIter.hasNext()){
+                Map.Entry i = (Map.Entry) mapIter.next();
+                gridPane.getChildren().remove(i.getValue());
+            }
+            for(int i = 0; i < arr.length; i++){
+                if(arr[i] != null){
+                    int x = (i+1)/3;
+                    int y = (i+1)%3;
+                    if(y == 0){
+                        gridPane.add((Node) nodes.get(arr[i]), x-1, 2);
+                    }
+                    else{
+                        gridPane.add((Node) nodes.get(arr[i]), x, y-1);
+                    }
+                }
             }
         }
     }
 
-   
-private void Save(ObservableList<Node> children) {
-    FileChooser fileChooser = new FileChooser();
-    fileChooser.setTitle("Save file:");
-    
-    File file = fileChooser.showSaveDialog(new Stage());
-    if (file != null) {
-        Values values = new Values();
-        children.stream().filter(child -> child.getId() != null)
-                .forEach(child -> { 
-                    if (child instanceof gaugeRootItem) {
-                        gaugeItem gaugecheck = (CheckBoxTreeItem) child; 
-                        values.setGaugeBox(gaugecheck.getSelected()); 
-                    } else if (child instanceof dataRootItem) {
-                        dataRootItem datacheck = (CheckBoxTreeItem) child; 
-                        values.setDataBox(datacheck.getSelected());
-                    }
-                });
-        try {
-            org.apache.commons.io.FileUtils.write(file, new Gson().toJson(values), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            //handle properly 
+    private class Values {
+
+        String[] locations = cells;
+
+        public String[] getCells() {
+            return locations;
         }
     }
 }
- 
-private static class Values {
-    private CheckBoxTreeItem<String> gaugeItem = new CheckBoxTreeItem<>("Gauge List");
-    private CheckBoxTreeItem<String> dataItem = new CheckBoxTreeItem<>("Gauge List");
-
-    public CheckBoxTreeItem<String> 
-}
- */
