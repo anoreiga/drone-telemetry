@@ -9,13 +9,12 @@ package guipane;
 //APACHE IMPORTS
 //********************
 import org.apache.commons.io.*;
-import org.apache.commons.io.FileUtils.*;
 
 //********************
 //GOOGLE IMPORTS
 //********************
 import com.google.gson.Gson;
-import com.google.gson.*;
+import com.thoughtworks.xstream.XStream;
 
 //********************
 //JAVA IMPORTS
@@ -23,7 +22,6 @@ import com.google.gson.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.charset.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
@@ -44,10 +42,8 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
@@ -67,7 +63,6 @@ import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.TreeItem;
@@ -82,31 +77,26 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.RowConstraints;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Path;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import javafx.util.Duration;
-import javafx.util.StringConverter;
 import javafx.util.converter.DoubleStringConverter;
 
 import eu.hansolo.medusa.*;
-import eu.hansolo.*;
-import eu.hansolo.medusa.skins.ClockSkin;
 import eu.hansolo.medusa.skins.GaugeSkin;
-import eu.hansolo.medusa.skins.LcdClockSkin;
-import eu.hansolo.medusa.skins.ModernSkin;
 import eu.hansolo.medusa.skins.PlainClockSkin;
-import eu.hansolo.medusa.skins.SlimClockSkin;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  *
@@ -114,8 +104,13 @@ import eu.hansolo.medusa.skins.SlimClockSkin;
  * @author Brendan
  */
 public class GUIPane extends Application {
+    
+    private String[] cells = new String[9];
+    private HashMap<String, Object> nodes = new HashMap<>();
+    private GridPane gridPane = null;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) { 
+
         Application.launch(args);
     }
 
@@ -207,19 +202,28 @@ public class GUIPane extends Application {
 
         //creating the save file initial functionality 
         MenuItem saveItem = new MenuItem("Save File");
-        /*
+
         saveItem.setOnAction(e -> {
             try {
                 saveFile(children);
             } catch (IOException ex) {
                 Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
             }
-        }); */
-
-        fileMenu.getItems().addAll(newItem,
-                new SeparatorMenuItem(), openItem,
-                saveItem, new MenuItem("Save As..."), new SeparatorMenuItem(),
-                new MenuItem("Load File"),
+        });
+        
+        //creating the load file initial functionality 
+        MenuItem loadItem = new MenuItem("Load File");
+        
+        loadItem.setOnAction(e -> {
+            try {
+                loadFile(children);
+            } catch (IOException ex) {
+                Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        
+        fileMenu.getItems().addAll(newItem, openItem,
+                new SeparatorMenuItem(), saveItem, loadItem,
                 new SeparatorMenuItem(), exitItem);
 
         //creating the Edit menu
@@ -382,7 +386,7 @@ public class GUIPane extends Application {
         //GRID PANE 
         //********************************
         //Let's try and create a grid pane for the center
-        GridPane gridPane = new GridPane();
+        gridPane = new GridPane();
         //setting grid pane lines visible 
         gridPane.setLayoutX(100);
         gridPane.setLayoutY(100);
@@ -445,6 +449,8 @@ public class GUIPane extends Application {
         b.getData().addAll(s1, s2, S3);
 
         gridPane.add(b, 0, 2);
+        cells[2] = "bar";
+        nodes.put("bar", b);
 
         //adding a line chart display to the grid pane 
         //defining the x axis
@@ -475,25 +481,30 @@ public class GUIPane extends Application {
 
         //adding the chart to grid pane 
         gridPane.add(linePlot, 1, 0);
-        
+        cells[3] = "line";
+        nodes.put("line", linePlot);
         //creating a new clock
         Clock clock = new Clock();
-        
-        clock.setSkin(new SlimClockSkin(clock));
-        
+
+        clock.setSkin(new PlainClockSkin(clock));
+
         //TODO: make dynamic
         clock.setTitle("Speedometer");
         //gauge.setUnit("MPH");
-        
+
         //adding the clock to grid pane 
         gridPane.add(clock, 1, 1);
-        
+        cells[4] = "clock";
+        nodes.put("clock", clock);
+
         //creating a new speedometer 
         Gauge gauge = new Gauge();
         gauge.setSkin(new GaugeSkin(gauge));
-        
+
         gridPane.add(gauge, 1, 2);
-        
+        cells[5] = "gauge";
+        nodes.put("gauge", gauge);
+
         //adding a single character display to the grid pane
         TextArea tf = new TextArea();
         PseudoClass centered = PseudoClass.getPseudoClass("centered");
@@ -527,8 +538,13 @@ public class GUIPane extends Application {
                 -> ta.pseudoClassStateChanged(centered, isNowCentered));
 
         gridPane.add(tf, 0, 1);
+        cells[1] = "tf";
+        nodes.put("tf", tf);
+        
         gridPane.add(ta, 0, 0);
-
+        cells[0] = "ta";
+        nodes.put("ta", ta);
+        
         //Create event handler to insert gauge image into center
         CheckBoxTreeItem<String> rootItem = new CheckBoxTreeItem<String>("Root");
         rootItem.setExpanded(true);
@@ -711,39 +727,66 @@ public class GUIPane extends Application {
 //  PROCEED AT THY OWN RISK
 //***********************
 //saving function 
-    /*private void saveFile(ObservableList<Node> children) throws IOException {
+    
+    
+    private void saveFile(ObservableList<Node> children) throws IOException {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save file");
 
         File file = fileChooser.showSaveDialog(new Stage());
         if (file != null) {
             Values values = new Values();
-            children.stream().filter(child -> child.getId() != null)
-                    .forEach(child -> {
-                        if (child instanceof GridPane) {
-                            GridPane gridpane = (GridPane) child;
-                            values.setGridPane(gridpane.getId());
-                        });
-
-                        String charsetAsString = String.valueOf(StandardCharsets.UTF_8);
-                        try {
-                            FileUtils.writeStringToFile(file, new Gson().toJson(values), charsetAsString);
-                        } catch (IOException ex) {
-                            Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    });
+            
+            String charsetAsString = String.valueOf(StandardCharsets.UTF_8);
+            try {
+                XStream xstream = new XStream();
+                String output = xstream.toXML(values.getCells());
+                FileUtils.writeStringToFile(file, output, charsetAsString);
+            } catch (IOException ex) {
+                Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
-    } */
-    private static class Values {
-
-        GridPane gridpane = new GridPane();
-
-        public GridPane getGridPane() {
-            return gridpane;
+    }
+    
+       private void loadFile(ObservableList<Node> children) throws IOException {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Load file");
+        File file = fileChooser.showOpenDialog(new Stage());
+        if (file != null) {
+            // handle properly
+            
+            String charsetAsString = String.valueOf(StandardCharsets.UTF_8);
+            
+            XStream xstream = new XStream();
+                        
+            String[] arr = (String[]) xstream.fromXML(file);
+            
+            Iterator mapIter = nodes.entrySet().iterator();
+            while(mapIter.hasNext()){
+                Map.Entry i = (Map.Entry) mapIter.next();
+                gridPane.getChildren().remove(i.getValue());
+            }
+            for(int i = 0; i < arr.length; i++){
+                if(arr[i] != null){
+                    int x = (i+1)/3;
+                    int y = (i+1)%3;
+                    if(y == 0){
+                        gridPane.add((Node) nodes.get(arr[i]), x-1, 2);
+                    }
+                    else{
+                        gridPane.add((Node) nodes.get(arr[i]), x, y-1);
+                    }
+                }
+            }
         }
+    }
 
-        public void setGridPane(GridPane gridpane) {
-            this.gridpane = gridpane;
+    private class Values {
+
+        String[] locations = cells;
+
+        public String[] getCells() {
+            return locations;
         }
     }
 }
