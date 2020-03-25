@@ -127,6 +127,8 @@ public class GUIPane extends Application {
 
         BorderPane borderPane = new BorderPane();
 
+        ToggleSwitch button = new ToggleSwitch();
+        
         Scene scene = new Scene(createBorderPane(borderPane.getChildren()), 1000, 1000);
         scene.getStylesheets().add("/guipane/css/styles.css");
 
@@ -504,6 +506,12 @@ public class GUIPane extends Application {
         gridPane.add(clock, 1, 1);
         cells[4] = "clock";
         nodes.put("clock", clock);
+        
+        //adding a toggle switch to the grid pane 
+        ToggleSwitch button = new ToggleSwitch();
+        gridPane.add(button, 2, 1);
+        cells[7] = "button";
+        nodes.put("button", button);
         
         //adding a circle gauge
         Gauge circle = new Gauge();
