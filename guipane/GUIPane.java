@@ -731,7 +731,7 @@ public class GUIPane extends Application {
     
     private void saveFile(ObservableList<Node> children) throws IOException {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Save file");
+        fileChooser.setTitle("Save Current Layout");
 
         File file = fileChooser.showSaveDialog(new Stage());
         if (file != null) {
@@ -750,7 +750,7 @@ public class GUIPane extends Application {
     
        private void loadFile(ObservableList<Node> children) throws IOException {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Load file");
+        fileChooser.setTitle("Load Previous Layout");
         File file = fileChooser.showOpenDialog(new Stage());
         if (file != null) {
             // handle properly
