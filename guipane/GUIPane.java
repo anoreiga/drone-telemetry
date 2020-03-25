@@ -91,9 +91,17 @@ import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.converter.DoubleStringConverter;
 
+//********************
+//MEDUSA IMPORTS
+//********************
 import eu.hansolo.medusa.*;
 import eu.hansolo.medusa.skins.GaugeSkin;
 import eu.hansolo.medusa.skins.PlainClockSkin;
+import eu.hansolo.medusa.skins.SlimSkin;
+
+//********************
+//JAVA IMPORTS
+//********************
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -496,6 +504,14 @@ public class GUIPane extends Application {
         gridPane.add(clock, 1, 1);
         cells[4] = "clock";
         nodes.put("clock", clock);
+        
+        //adding a circle gauge
+        Gauge circle = new Gauge();
+        circle.setSkin(new SlimSkin(circle));
+
+        gridPane.add(circle, 2, 0);
+        cells[6] = "circle";
+        nodes.put("circle", circle);
 
         //creating a new speedometer 
         Gauge gauge = new Gauge();
