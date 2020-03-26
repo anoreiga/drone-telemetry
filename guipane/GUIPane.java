@@ -9,13 +9,11 @@ package guipane;
 //APACHE IMPORTS
 //********************
 import org.apache.commons.io.*;
-
 //********************
 //GOOGLE IMPORTS
 //********************
 import com.google.gson.Gson;
-import com.thoughtworks.xstream.XStream;
-
+import com.google.gson.reflect.TypeToken;
 //********************
 //JAVA IMPORTS
 //********************
@@ -98,6 +96,9 @@ import eu.hansolo.medusa.*;
 import eu.hansolo.medusa.skins.GaugeSkin;
 import eu.hansolo.medusa.skins.PlainClockSkin;
 import eu.hansolo.medusa.skins.SlimSkin;
+import java.io.FileReader;
+import java.io.Reader;
+import java.lang.ProcessBuilder.Redirect.Type;
 
 //********************
 //JAVA IMPORTS
@@ -105,6 +106,7 @@ import eu.hansolo.medusa.skins.SlimSkin;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import org.controlsfx.control.ToggleSwitch;
 
 /**
  *
@@ -113,8 +115,12 @@ import java.util.Map;
  */
 public class GUIPane extends Application {
     
-    private String[] cells = new String[9];
+    //This HashMap is used to map the nodes in the GridPane to ids, 
+    //so that they can be identified later and their locations within
+    //the GridPane written to a file
     private HashMap<String, Object> nodes = new HashMap<>();
+    //This global variable will allow the GridPane to be accessed outside 
+    //of the createBorderPane method
     private GridPane gridPane = null;
 
     public static void main(String[] args) { 
@@ -420,48 +426,6 @@ public class GUIPane extends Application {
         //adding text area to the grid pane
         TextArea ta = new TextArea();
 
-        //adding the BarGauge to the grid display 
-        //x and y axis
-        final String A = "Height [h]";
-        final String B = "Horizontal Speed [m/h]";
-        final String C = "Vertical Speed [m/v]";
-
-        final NumberAxis x = new NumberAxis();
-        final CategoryAxis y = new CategoryAxis();
-//create bar chart
-        final BarChart<Number, String> b
-                = new BarChart<Number, String>(x, y);
-        b.setTitle("Flight Data (Units: Metric)");
-//set title for x axis
-        x.setLabel("Category");
-        x.setTickLabelRotation(90);
-//set title for y axis
-        y.setLabel("Measurement");
-//dataset on 1999
-        XYChart.Series s1 = new XYChart.Series();
-        s1.setName("Height [h]");
-        s1.getData().add(new XYChart.Data(10, A));
-        s1.getData().add(new XYChart.Data(60, B));
-        s1.getData().add(new XYChart.Data(30, C));
-//dataset on 2009
-        XYChart.Series s2 = new XYChart.Series();
-        s2.setName("Horizontal Speed [m/h]");
-        s2.getData().add(new XYChart.Data(50, A));
-        s2.getData().add(new XYChart.Data(30, C));
-        s2.getData().add(new XYChart.Data(20, B));
-//dataset on 2019
-        XYChart.Series S3 = new XYChart.Series();
-        S3.setName("Vertical Speed [m/v]");
-        S3.getData().add(new XYChart.Data(70, A));
-        S3.getData().add(new XYChart.Data(25, B));
-        S3.getData().add(new XYChart.Data(5, C));
-
-        b.getData().addAll(s1, s2, S3);
-
-        gridPane.add(b, 0, 2);
-        cells[2] = "bar";
-        nodes.put("bar", b);
-
         //adding a line chart display to the grid pane 
         //defining the x axis
         NumberAxis lineX = new NumberAxis(1960, 2020, 10);
@@ -491,7 +455,6 @@ public class GUIPane extends Application {
 
         //adding the chart to grid pane 
         gridPane.add(linePlot, 1, 0);
-        cells[3] = "line";
         nodes.put("line", linePlot);
         //creating a new clock
         Clock clock = new Clock();
@@ -504,13 +467,11 @@ public class GUIPane extends Application {
 
         //adding the clock to grid pane 
         gridPane.add(clock, 1, 1);
-        cells[4] = "clock";
         nodes.put("clock", clock);
         
         //adding a toggle switch to the grid pane 
         ToggleSwitch button = new ToggleSwitch();
         gridPane.add(button, 2, 1);
-        cells[7] = "button";
         nodes.put("button", button);
         
         //adding a circle gauge
@@ -518,7 +479,6 @@ public class GUIPane extends Application {
         circle.setSkin(new SlimSkin(circle));
 
         gridPane.add(circle, 2, 0);
-        cells[6] = "circle";
         nodes.put("circle", circle);
 
         //creating a new speedometer 
@@ -526,7 +486,6 @@ public class GUIPane extends Application {
         gauge.setSkin(new GaugeSkin(gauge));
 
         gridPane.add(gauge, 1, 2);
-        cells[5] = "gauge";
         nodes.put("gauge", gauge);
 
         //adding a single character display to the grid pane
@@ -562,11 +521,9 @@ public class GUIPane extends Application {
                 -> ta.pseudoClassStateChanged(centered, isNowCentered));
 
         gridPane.add(tf, 0, 1);
-        cells[1] = "tf";
         nodes.put("tf", tf);
         
         gridPane.add(ta, 0, 0);
-        cells[0] = "ta";
         nodes.put("ta", ta);
         
         //Create event handler to insert gauge image into center
@@ -759,12 +716,17 @@ public class GUIPane extends Application {
 
         File file = fileChooser.showSaveDialog(new Stage());
         if (file != null) {
-            Values values = new Values();
+            
+            //Create a new values object, in order to store and write the current
+            //state of the GridPane's cells to a file
+            Values values = new Values(gridPane);
             
             String charsetAsString = String.valueOf(StandardCharsets.UTF_8);
+            
+            //Write the array of node ids to a file using Gson
             try {
-                XStream xstream = new XStream();
-                String output = xstream.toXML(values.getCells());
+                Gson gson = new Gson();
+                String output = gson.toJson(values.getCells());
                 FileUtils.writeStringToFile(file, output, charsetAsString);
             } catch (IOException ex) {
                 Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
@@ -781,15 +743,23 @@ public class GUIPane extends Application {
             
             String charsetAsString = String.valueOf(StandardCharsets.UTF_8);
             
-            XStream xstream = new XStream();
-                        
-            String[] arr = (String[]) xstream.fromXML(file);
+            //Use Gson to read file into a string array
+            Gson gson = new Gson();
+            java.lang.reflect.Type type = new TypeToken<String[]>(){}.getType();
+            String[] arr = null;
+            try(Reader input = new FileReader(file)){
+                arr = (String[]) gson.fromJson(input, String[].class);
+            }
             
+            //Clear the gridpane
             Iterator mapIter = nodes.entrySet().iterator();
             while(mapIter.hasNext()){
                 Map.Entry i = (Map.Entry) mapIter.next();
                 gridPane.getChildren().remove(i.getValue());
             }
+            
+            //Put the nodes into their appropriate positions within the GridPane
+            //based on the locations of their ids within the array
             for(int i = 0; i < arr.length; i++){
                 if(arr[i] != null){
                     int x = (i+1)/3;
@@ -806,11 +776,27 @@ public class GUIPane extends Application {
     }
 
     private class Values {
-
-        String[] locations = cells;
-
+        
+        String[] locations = new String[9];
+        
+        public Values(GridPane pane){
+            //Get the current location of each node in the gridpane, and store its
+            //corresponding id from the HashMap in the appropriate location in a string array
+            pane.getChildren().forEach(node ->{
+            Iterator mapIter = nodes.entrySet().iterator();
+            while(mapIter.hasNext()){
+                Map.Entry i = (Map.Entry) mapIter.next();
+                if(i.getValue().equals(node)){
+                    locations[(GridPane.getColumnIndex(node) * 3) + GridPane.getRowIndex(node)] = (String) i.getKey();
+                }
+            }
+            });
+        }
+        
+        //Return the array of node ids
         public String[] getCells() {
             return locations;
         }
     }
+
 }
