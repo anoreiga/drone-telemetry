@@ -108,6 +108,7 @@ import java.lang.ProcessBuilder.Redirect.Type;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import javafx.scene.layout.StackPane;
 
 /**
  *
@@ -130,7 +131,7 @@ public class GUIPane extends Application {
     }
 
     @Override
-    public void start(Stage stage) throws Exception {
+    public void start(Stage primaryStage) throws Exception {
 
         BorderPane borderPane = new BorderPane();
 
@@ -139,10 +140,10 @@ public class GUIPane extends Application {
         Scene scene = new Scene(createBorderPane(borderPane.getChildren()), 1000, 1000);
         scene.getStylesheets().add("/guipane/css/styles.css");
 
-        stage.setTitle("Gauge/Data Column Selection");
+        primaryStage.setTitle("Gauge/Data Column Selection");
 
-        stage.setScene(scene);
-        stage.show();
+        primaryStage.setScene(scene);
+        primaryStage.show();
 
     }
 
@@ -672,9 +673,28 @@ public class GUIPane extends Application {
 
         //create data frequency button 
         ToggleButton dataButton = new ToggleButton("Set Data Frequency");
-        
-        
-
+        //open a new window when the toggle button is pressed
+        dataButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override 
+            public void handle(ActionEvent event) {
+                Label dataLabel = new Label("Select data frequency:");
+                StackPane secondaryLayout = new StackPane();
+                secondaryLayout.getChildren().add(dataLabel);
+                
+                Scene secondScene = new Scene(secondaryLayout, 230, 100);
+                
+                //new window 
+                Stage newWindow = new Stage();
+                newWindow.setTitle("Data Frequency");
+                newWindow.setScene(secondScene);
+                
+                //specify modality for the new window 
+                newWindow.initModality(Modality.WINDOW_MODAL);
+                
+                newWindow.show();
+            }
+        });
+                
         //display the current time property
         //TODO: add time listener to timestamp cell in spreadsheet
         //TODO: add updateValues() method 
