@@ -44,8 +44,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.chart.BarChart;
-import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -100,7 +98,6 @@ import eu.hansolo.medusa.skins.PlainClockSkin;
 import eu.hansolo.medusa.skins.SlimSkin;
 import java.io.FileReader;
 import java.io.Reader;
-import java.lang.ProcessBuilder.Redirect.Type;
 
 //********************
 //JAVA IMPORTS
@@ -108,7 +105,10 @@ import java.lang.ProcessBuilder.Redirect.Type;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import javafx.scene.layout.StackPane;
+import javafx.beans.value.ChangeListener;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 
 /**
  *
@@ -672,27 +672,71 @@ public class GUIPane extends Application {
         //************************        
 
         //create data frequency button 
-        ToggleButton dataButton = new ToggleButton("Set Data Frequency");
+        Button dataButton = new Button("Set Data Frequency");
         //open a new window when the toggle button is pressed
-        dataButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override 
-            public void handle(ActionEvent event) {
-                Label dataLabel = new Label("Select data frequency:");
-                StackPane secondaryLayout = new StackPane();
-                secondaryLayout.getChildren().add(dataLabel);
-                
-                Scene secondScene = new Scene(secondaryLayout, 230, 100);
-                
-                //new window 
-                Stage newWindow = new Stage();
-                newWindow.setTitle("Data Frequency");
-                newWindow.setScene(secondScene);
-                
-                //specify modality for the new window 
-                newWindow.initModality(Modality.WINDOW_MODAL);
-                
-                newWindow.show();
-            }
+        dataButton.setOnAction((ActionEvent event) -> {
+            Label dataLabel = new Label("Select data frequency:");
+            
+            HBox dataMenu = new HBox();
+            
+            dataMenu.setAlignment(Pos.CENTER);
+            dataMenu.alignmentProperty().isBound();
+            dataMenu.setSpacing(5);
+            
+            final ToggleGroup group = new ToggleGroup();
+            
+            RadioButton data1 = new RadioButton("1");
+            data1.setToggleGroup(group);
+            data1.setSelected(true);
+            data1.requestFocus();
+            
+            RadioButton data2 = new RadioButton("1.5");
+            data2.setToggleGroup(group);
+            data2.setSelected(true);            
+            data2.requestFocus();
+            
+            RadioButton data3 = new RadioButton("2");
+            data3.setToggleGroup(group);
+            data3.setSelected(true);            
+            data3.requestFocus();
+            
+            RadioButton data4 = new RadioButton("-1");
+            data4.setToggleGroup(group);
+            data4.setSelected(true);            
+            data4.requestFocus();
+                                    
+            Label labelInfo = new Label();
+            labelInfo.setTextFill(Color.BLUE);
+            
+            group.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+                @Override
+                public void changed(ObservableValue<? extends Toggle> ov, Toggle old_toggle, Toggle new_toggle) {
+                    //has selection
+                    if (group.getSelectedToggle() != null) {
+                        RadioButton button = (RadioButton) group.getSelectedToggle();
+                        System.out.println("Button: " + button.getText());
+                        labelInfo.setText("You selected " + button.getText());
+                    }
+                }
+            });
+            
+            dataMenu.getChildren().addAll(data4, data1, data2, data3);
+            
+            VBox secondaryLayout = new VBox();
+            secondaryLayout.setSpacing(10);
+            secondaryLayout.getChildren().addAll(dataLabel, dataMenu, labelInfo);
+            
+            Scene secondScene = new Scene(secondaryLayout, 330, 150);
+            
+            //new window
+            Stage newWindow = new Stage();
+            newWindow.setTitle("Data Frequency");
+            newWindow.setScene(secondScene);
+            
+            //specify modality for the new window
+            newWindow.initModality(Modality.WINDOW_MODAL);
+            
+            newWindow.show();
         });
                 
         //display the current time property
@@ -715,13 +759,8 @@ public class GUIPane extends Application {
         return borderPane;
     }
 
-//***********************
-//  VENTURE BEHIND THIS POINT AND RISK THY SANITY
-//  PROCEED AT THY OWN RISK
-//***********************
+
 //saving function 
-    
-    
     private void saveFile(ObservableList<Node> children) throws IOException {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save Current Layout");
