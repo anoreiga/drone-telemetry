@@ -93,7 +93,9 @@ import javafx.util.converter.DoubleStringConverter;
 //MEDUSA IMPORTS
 //********************
 import eu.hansolo.medusa.*;
+import eu.hansolo.medusa.skins.DashboardSkin;
 import eu.hansolo.medusa.skins.GaugeSkin;
+import eu.hansolo.medusa.skins.HSkin;
 import eu.hansolo.medusa.skins.PlainClockSkin;
 import eu.hansolo.medusa.skins.SlimSkin;
 import java.io.FileReader;
@@ -106,7 +108,6 @@ import java.lang.ProcessBuilder.Redirect.Type;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import org.controlsfx.control.ToggleSwitch;
 
 /**
  *
@@ -456,36 +457,18 @@ public class GUIPane extends Application {
         //adding the chart to grid pane 
         gridPane.add(linePlot, 1, 0);
         nodes.put("line", linePlot);
-        //creating a new clock
-        Clock clock = new Clock();
-
-        clock.setSkin(new PlainClockSkin(clock));
-
-        //TODO: make dynamic
-        clock.setTitle("Speedometer");
-        //gauge.setUnit("MPH");
-
-        //adding the clock to grid pane 
-        gridPane.add(clock, 1, 1);
-        nodes.put("clock", clock);
         
         //adding a toggle switch to the grid pane 
         ToggleSwitch button = new ToggleSwitch();
         gridPane.add(button, 2, 1);
         nodes.put("button", button);
-        
-        //adding a circle gauge
-        Gauge circle = new Gauge();
-        circle.setSkin(new SlimSkin(circle));
-
-        gridPane.add(circle, 2, 0);
-        nodes.put("circle", circle);
 
         //creating a new speedometer 
         Gauge gauge = new Gauge();
-        gauge.setSkin(new GaugeSkin(gauge));
+        gauge.setSkin(new HSkin(gauge));
+        gauge.addTickLabelSection((new Section(100, 150)));
 
-        gridPane.add(gauge, 1, 2);
+        gridPane.add(gauge, 0, 2);
         nodes.put("gauge", gauge);
 
         //adding a single character display to the grid pane
@@ -682,12 +665,21 @@ public class GUIPane extends Application {
         );
         timeline.setCycleCount(Animation.INDEFINITE);
         timeline.play();
+ 
+        //************************
+        //DATA FREQUENCY 
+        //************************        
+
+        //create data frequency button 
+        ToggleButton dataButton = new ToggleButton("Set Data Frequency");
+        
+        
 
         //display the current time property
         //TODO: add time listener to timestamp cell in spreadsheet
         //TODO: add updateValues() method 
         //add buttons to the playback menu
-        playbackMenu.getChildren().addAll(reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton, timeStamp, centerText);
+        playbackMenu.getChildren().addAll(centerText, reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton, timeStamp, dataButton);
 
         //************************
         //BORDER PANE SETUP 
