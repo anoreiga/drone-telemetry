@@ -534,12 +534,12 @@ public class GUIPane extends Application {
         gridPane.getRowConstraints().addAll(row1Height, row2Height, row3Height);
                 
         //add text fields to hboxes 
-        TextField speedField = new TextField();
-        TextField areaField = new TextField();
-        TextField singleField = new TextField();
-        TextField toggleField = new TextField();
-        TextField xyField = new TextField();
-        TextField timeField = new TextField();
+        TextField speedField = new TextField("Speedometer Gauge");
+        TextField areaField = new TextField("TextArea Gauge");
+        TextField singleField = new TextField("Single Character Gauge");
+        TextField toggleField = new TextField("On/Off Switch Gauge");
+        TextField xyField = new TextField("XY Plot Gauge");
+        TextField timeField = new TextField("Timestamp Gauge");
         
         //adding comboboxes to hboxes
         final ComboBox speedCombo = new ComboBox(dataView.getItems());
