@@ -124,6 +124,9 @@ public class GUIPane extends Application {
     //This global variable will allow the GridPane to be accessed outside 
     //of the createBorderPane method
     private GridPane gridPane = null;
+    
+    //global variable for data frequency
+    private Label dataFreq = new Label();
 
     public static void main(String[] args) { 
 
@@ -673,6 +676,8 @@ public class GUIPane extends Application {
 
         //create data frequency button 
         Button dataButton = new Button("Set Data Frequency");
+        
+        Label dataDisplay = new Label();
         //open a new window when the toggle button is pressed
         dataButton.setOnAction((ActionEvent event) -> {
             Label dataLabel = new Label("Select data frequency:");
@@ -708,6 +713,10 @@ public class GUIPane extends Application {
             Label labelInfo = new Label();
             labelInfo.setTextFill(Color.BLUE);
             
+            dataFreq.setTextFill(Color.WHITE);
+            dataFreq.setFont(new Font(15));
+            dataFreq.getBorder();
+            
             group.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
                 @Override
                 public void changed(ObservableValue<? extends Toggle> ov, Toggle old_toggle, Toggle new_toggle) {
@@ -715,7 +724,10 @@ public class GUIPane extends Application {
                     if (group.getSelectedToggle() != null) {
                         RadioButton button = (RadioButton) group.getSelectedToggle();
                         System.out.println("Button: " + button.getText());
-                        labelInfo.setText("You selected " + button.getText());
+                        labelInfo.setText("Your new data frequency is: " + button.getText() + " update(s) per second");
+                        dataFreq.setText("Current Data Frequency: " + button.getText() + " update(s) per second");
+                        
+                        
                     }
                 }
             });
@@ -742,8 +754,10 @@ public class GUIPane extends Application {
         //display the current time property
         //TODO: add time listener to timestamp cell in spreadsheet
         //TODO: add updateValues() method 
+        
+        
         //add buttons to the playback menu
-        playbackMenu.getChildren().addAll(centerText, reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton, timeStamp, dataButton);
+        playbackMenu.getChildren().addAll(centerText, reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton, timeStamp, dataButton, dataFreq);
 
         //************************
         //BORDER PANE SETUP 
