@@ -336,7 +336,11 @@ public class GUIPane extends Application {
 
         //add toolbar here if wanted
         vbox.getChildren().addAll(menuBar);
-
+        
+        //*******************************
+        //CREATING GAUGE LISTS + LISTENERS
+        //*******************************
+            
         ListView <Item> gaugeView = new ListView<>();
                 
         Item toggleGauge = new Item("Toggle Gauge ", false);
@@ -353,27 +357,95 @@ public class GUIPane extends Application {
                 toggleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
                     System.out.println(toggleGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
                     
-                //adding a toggle switch to the grid pane 
-                ToggleSwitch toggleSwitch = new ToggleSwitch();
-                gridPane.add(toggleSwitch, 1, 1);
-                nodes.put("button", toggleSwitch);           
-                
+                    //adding a toggle switch to the grid pane 
+                    ToggleSwitch toggleSwitch = new ToggleSwitch();
+                    gridPane.add(toggleSwitch, 1, 1);
+                    nodes.put("button", toggleSwitch);    
+                    
                 });
-
+                
                 singleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
                     System.out.println(singleGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //adding a single character display to the grid pane
+                    TextArea tf = new TextArea();
+                    PseudoClass centered = PseudoClass.getPseudoClass("centered");
+
+                    Pattern validDoubleText = Pattern.compile("-?((\\d*)|(\\d+\\.\\d*))");
+
+                    TextFormatter<Double> textFormatter = new TextFormatter<Double>(new DoubleStringConverter(), 0.0,
+                            change -> {
+                                String newText = change.getControlNewText();
+                                if (validDoubleText.matcher(newText).matches()) {
+                                    return change;
+                                } else {
+                                    return null;
+                                }
+                            });
+
+                    tf.setTextFormatter(textFormatter);
+
+                    tf.setFont(Font.font("times new roman", 70)); //setting the font and font size
+
+                    gridPane.add(tf, 0, 1);
+                    nodes.put("tf", tf);                      
                 });
 
                 textGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
                     System.out.println(textGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //adding text area to the grid pane
+                    TextArea ta = new TextArea();
+
+                    gridPane.add(ta, 0, 0);
+                    nodes.put("ta", ta);                    
+                                  
                 });
 
                 barGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
                     System.out.println(barGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //adding a line chart display to the grid pane 
+                    //defining the x axis
+                    NumberAxis lineX = new NumberAxis(1960, 2020, 10);
+                    lineX.setLabel("Years");
+
+                    //defining the y axis 
+                    NumberAxis lineY = new NumberAxis(0, 350, 50);
+                    lineY.setLabel("No. of schools");
+
+                    //creating the line chart 
+                    LineChart linePlot = new LineChart(lineX, lineY);
+
+                    //setting the chart data 
+                    //TODO: make dynamic 
+                    XYChart.Series series = new XYChart.Series();
+                    series.setName("No of schools in a year");
+
+                    series.getData().add(new XYChart.Data(1970, 15));
+                    series.getData().add(new XYChart.Data(1980, 30));
+                    series.getData().add(new XYChart.Data(1990, 60));
+                    series.getData().add(new XYChart.Data(2000, 120));
+                    series.getData().add(new XYChart.Data(2013, 240));
+                    series.getData().add(new XYChart.Data(2014, 300));
+
+                    //setting the data to line chart 
+                    linePlot.getData().add(series);
+
+                    //adding the chart to grid pane 
+                    gridPane.add(linePlot, 1, 0);
+                    nodes.put("line", linePlot);                    
                 });  
 
                 speedGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
                     System.out.println(speedGauge.getName() + " changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //creating a new speedometer 
+                    Gauge gauge = new Gauge();
+                    gauge.setSkin(new HSkin(gauge));
+
+                    gridPane.add(gauge, 0, 2);
+                    nodes.put("gauge", gauge);                
                 });            
             
             }
@@ -451,87 +523,8 @@ public class GUIPane extends Application {
 
         gridPane.getColumnConstraints().addAll(column1width, column2width, column3width);
         gridPane.getRowConstraints().addAll(row1Height, row2Height, row3Height);
-
-        //adding text area to the grid pane
-        TextArea ta = new TextArea();
-
-        //adding a line chart display to the grid pane 
-        //defining the x axis
-        NumberAxis lineX = new NumberAxis(1960, 2020, 10);
-        lineX.setLabel("Years");
-
-        //defining the y axis 
-        NumberAxis lineY = new NumberAxis(0, 350, 50);
-        lineY.setLabel("No. of schools");
-
-        //creating the line chart 
-        LineChart linePlot = new LineChart(lineX, lineY);
-
-        //setting the chart data 
-        //TODO: make dynamic 
-        XYChart.Series series = new XYChart.Series();
-        series.setName("No of schools in a year");
-
-        series.getData().add(new XYChart.Data(1970, 15));
-        series.getData().add(new XYChart.Data(1980, 30));
-        series.getData().add(new XYChart.Data(1990, 60));
-        series.getData().add(new XYChart.Data(2000, 120));
-        series.getData().add(new XYChart.Data(2013, 240));
-        series.getData().add(new XYChart.Data(2014, 300));
-
-        //setting the data to line chart 
-        linePlot.getData().add(series);
-
-        //adding the chart to grid pane 
-        gridPane.add(linePlot, 1, 0);
-        nodes.put("line", linePlot);
         
-
-        //creating a new speedometer 
-        Gauge gauge = new Gauge();
-        gauge.setSkin(new HSkin(gauge));
-        
-
-        gridPane.add(gauge, 0, 2);
-        nodes.put("gauge", gauge);
-
-        //adding a single character display to the grid pane
-        TextArea tf = new TextArea();
-        PseudoClass centered = PseudoClass.getPseudoClass("centered");
-
-        Pattern validDoubleText = Pattern.compile("-?((\\d*)|(\\d+\\.\\d*))");
-
-        TextFormatter<Double> textFormatter = new TextFormatter<Double>(new DoubleStringConverter(), 0.0,
-                change -> {
-                    String newText = change.getControlNewText();
-                    if (validDoubleText.matcher(newText).matches()) {
-                        return change;
-                    } else {
-                        return null;
-                    }
-                });
-
-        tf.setTextFormatter(textFormatter);
-
-        textFormatter.valueProperty().addListener((obs, oldValue, newValue) -> {
-            System.out.println("New double value " + newValue);
-        });
-
-        tf.setFont(Font.font("times new roman", 70)); //setting the font and font size
-
         ToggleButton centerText = new ToggleButton("Center All Text");
-
-        centerText.selectedProperty().addListener((obs, wasCentered, isNowCentered)
-                -> tf.pseudoClassStateChanged(centered, isNowCentered));
-
-        centerText.selectedProperty().addListener((obs, wasCentered, isNowCentered)
-                -> ta.pseudoClassStateChanged(centered, isNowCentered));
-
-        gridPane.add(tf, 0, 1);
-        nodes.put("tf", tf);
-        
-        gridPane.add(ta, 0, 0);
-        nodes.put("ta", ta);
 
         //*****************************************
         //PLAYBACK BUTTONS 
@@ -681,7 +674,6 @@ public class GUIPane extends Application {
         //create data frequency button 
         Button dataButton = new Button("Set Data Frequency");
         
-        Label dataDisplay = new Label();
         //open a new window when the toggle button is pressed
         dataButton.setOnAction((ActionEvent event) -> {
             Label dataLabel = new Label("Select data frequency:");
