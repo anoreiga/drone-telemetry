@@ -459,32 +459,46 @@ public class GUIPane extends Application {
 
         //add tree items for data columns 
         //TODO: make dynamic 
-        CheckBoxTreeItem<String> dataRootItem = new CheckBoxTreeItem<>("Data Columns");
-        dataRootItem.setExpanded(true);
-
-        dataRootItem.getChildren().addAll(
-                new CheckBoxTreeItem<String>("BATTERY"),
-                new CheckBoxTreeItem<String>("YAW"),
-                new CheckBoxTreeItem<String>("PITCH"),
-                new CheckBoxTreeItem<String>("TIMESTAMP"));
-
-        //TreeView<String> tv2 = new TreeView<>(dataRootItem);
-        //tv2.setCellFactory(p2 -> new CheckBoxTreeCell<>(getSelectedProperty));
-        //tv2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        dataRootItem.addEventHandler(
-                CheckBoxTreeItem.<Path>checkBoxSelectionChangedEvent(),
-                (TreeModificationEvent<Path> e) -> {
-                    CheckBoxTreeItem<Path> item = e.getTreeItem();
-                    if (item.isSelected() || item.isIndeterminate()) {
-                        System.out.println("Some items are checked");
-                    } else {
-                        System.out.println("Some items are unchecked");
-                    }
+        //*******************************
+        //CREATING GAUGE LISTS + LISTENERS
+        //*******************************
+            
+        ListView <Item> dataView = new ListView<>();
+                
+        //TODO: make dynamic
+        Item battery = new Item("BATTERY ", false);
+        Item pitch = new Item("PITCH ", false);
+        Item yaw = new Item("YAW ", false);
+        Item timestamp = new Item("TIMESTAMP ", false);
+                    
+        dataView.getItems().addAll(timestamp, pitch, yaw, battery);        
+                
+            for (int i=0; i <= dataView.getItems().size(); i++) 
+            {      
+                battery.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(battery.getName() + "changed on state from "+wasOn+" to "+isNowOn);
                 });
-
-        TreeView<String> tv2 = new TreeView<>(dataRootItem);
-        tv2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
+                
+                pitch.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(pitch.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                });
+                
+                yaw.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(yaw.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                });
+                
+                timestamp.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(timestamp.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                });                
+            }    
+        
+        dataView.setCellFactory(CheckBoxListCell.forListView(new Callback<Item, ObservableValue<Boolean>>() {
+            @Override 
+            public ObservableValue<Boolean> call(Item item) {
+                    return item.onProperty();
+        }
+                }));
+        
         //create new tabpane on the left
         TabPane tabPaneLeft = new TabPane();
 
@@ -494,7 +508,7 @@ public class GUIPane extends Application {
 
         //fill the tabs with content from the checkbox tree view item lists
         gaugeTab.setContent(gaugeView);
-        dataTab.setContent(tv2);
+        dataTab.setContent(dataView);
 
         //add the tab pane content to the left tab pane
         tabPaneLeft.getTabs().addAll(gaugeTab, dataTab);
@@ -524,7 +538,7 @@ public class GUIPane extends Application {
         gridPane.getColumnConstraints().addAll(column1width, column2width, column3width);
         gridPane.getRowConstraints().addAll(row1Height, row2Height, row3Height);
         
-        ToggleButton centerText = new ToggleButton("Center All Text");
+        //ToggleButton centerText = new ToggleButton("Center All Text");
 
         //*****************************************
         //PLAYBACK BUTTONS 
@@ -753,11 +767,13 @@ public class GUIPane extends Application {
         
         
         //add buttons to the playback menu
-        playbackMenu.getChildren().addAll(centerText, reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton, timeStamp, dataButton, dataFreq);
+        //add centertext button here when fix
+        playbackMenu.getChildren().addAll(reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton, timeStamp, dataButton, dataFreq);
 
         //************************
         //BORDER PANE SETUP 
         //************************
+        
         //setting up the border pane
         borderPane.setTop(vbox);
         borderPane.setLeft(tabPaneLeft);
@@ -770,7 +786,10 @@ public class GUIPane extends Application {
     }
 
 
-//saving function 
+    //************************
+    //SAVING FUNCTION 
+    //************************
+    
     private void saveFile(ObservableList<Node> children) throws IOException {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save Current Layout");
@@ -795,7 +814,11 @@ public class GUIPane extends Application {
         }
     }
     
-       private void loadFile(ObservableList<Node> children) throws IOException {
+    //************************
+    //LOADING FUNCTION 
+    //************************       
+    
+    private void loadFile(ObservableList<Node> children) throws IOException {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Load Previous Layout");
         File file = fileChooser.showOpenDialog(new Stage());
