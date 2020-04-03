@@ -107,10 +107,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.ToolBar;
 import javafx.scene.control.cell.CheckBoxListCell;
 
 /**
@@ -297,31 +301,28 @@ public class GUIPane extends Application {
         });
 
         MenuItem helpItem = new MenuItem("Help Contents");
-        helpItem.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent event) {
-                Stage popupHelp = new Stage();
-                //popupAbout.initStyle(StageStyle.UTILITY);
-                popupHelp.initModality(Modality.APPLICATION_MODAL);
-                popupHelp.setTitle("Help Contents");
-
-                //creating a help menu 
-                Menu infoMenu = new Menu("Info");
-                //infoMenu.getItems().addAll(new MenuItem("Creating a Gauge", new MenuItem());
-
-                //creating a menu bar
-                MenuBar infoBar = new MenuBar();
-                infoBar.getMenus().addAll(infoMenu);
-
-                //adding the menu bar to the popup window 
-                //creating a layout for the text area 
-                VBox vbox = new VBox(infoBar);
-
-                //creating the popup scene 
-                Scene helpScene = new Scene(vbox, 500, 500);
-                popupHelp.setScene(helpScene);
-                popupHelp.showAndWait();
-
-            }
+        helpItem.setOnAction((ActionEvent event) -> {
+            Stage popupHelp = new Stage();
+            //popupAbout.initStyle(StageStyle.UTILITY);
+            popupHelp.initModality(Modality.APPLICATION_MODAL);
+            popupHelp.setTitle("Help Contents");
+            
+            //creating a help menu
+            Menu infoMenu = new Menu("Info");
+            //infoMenu.getItems().addAll(new MenuItem("Creating a Gauge", new MenuItem());
+            
+            //creating a menu bar
+            MenuBar infoBar = new MenuBar();
+            infoBar.getMenus().addAll(infoMenu);
+            
+            //adding the menu bar to the popup window
+            //creating a layout for the text area
+            VBox vbox = new VBox(infoBar);
+            
+            //creating the popup scene
+            Scene helpScene = new Scene(vbox, 500, 500);
+            popupHelp.setScene(helpScene);
+            popupHelp.showAndWait();
         });
 
         //creating the Help menu
@@ -331,7 +332,7 @@ public class GUIPane extends Application {
         //add all the menus to the menu bar
         menuBar.getMenus().addAll(fileMenu, editMenu, helpMenu);
 
-        //ToolBar toolbar = new ToolBar(new Button("New"), new Button("Open"));
+        //ToolBar toolBar = new ToolBar(new Button("New"), new Button("Open"));
         VBox vbox = new VBox();
 
         //add toolbar here if wanted
@@ -346,7 +347,7 @@ public class GUIPane extends Application {
         Item toggleGauge = new Item("Toggle Gauge ", false);
         Item singleGauge = new Item("Single Character Gauge ", false);
         Item textGauge = new Item("Text Gauge ", false);
-        Item barGauge = new Item("Bar Gauge ", false);
+        Item barGauge = new Item("XY Plot Gauge ", false);
         Item speedGauge = new Item("Speedometer Gauge ", false);
                     
         gaugeView.getItems().addAll(toggleGauge, singleGauge, textGauge, barGauge, speedGauge);        
@@ -359,7 +360,7 @@ public class GUIPane extends Application {
                     
                     //adding a toggle switch to the grid pane 
                     ToggleSwitch toggleSwitch = new ToggleSwitch();
-                    gridPane.add(toggleSwitch, 1, 1);
+                    gridPane.add(toggleSwitch, 0, 0);
                     nodes.put("button", toggleSwitch);    
                     
                 });
@@ -373,7 +374,7 @@ public class GUIPane extends Application {
 
                     Pattern validDoubleText = Pattern.compile("-?((\\d*)|(\\d+\\.\\d*))");
 
-                    TextFormatter<Double> textFormatter = new TextFormatter<Double>(new DoubleStringConverter(), 0.0,
+                    TextFormatter<Double> textFormatter = new TextFormatter<>(new DoubleStringConverter(), 0.0,
                             change -> {
                                 String newText = change.getControlNewText();
                                 if (validDoubleText.matcher(newText).matches()) {
@@ -387,7 +388,7 @@ public class GUIPane extends Application {
 
                     tf.setFont(Font.font("times new roman", 70)); //setting the font and font size
 
-                    gridPane.add(tf, 0, 1);
+                    gridPane.add(tf, 1, 2);
                     nodes.put("tf", tf);                      
                 });
 
@@ -397,7 +398,7 @@ public class GUIPane extends Application {
                     //adding text area to the grid pane
                     TextArea ta = new TextArea();
 
-                    gridPane.add(ta, 0, 0);
+                    gridPane.add(ta, 0, 2);
                     nodes.put("ta", ta);                    
                                   
                 });
@@ -433,7 +434,7 @@ public class GUIPane extends Application {
                     linePlot.getData().add(series);
 
                     //adding the chart to grid pane 
-                    gridPane.add(linePlot, 1, 0);
+                    gridPane.add(linePlot, 2, 0);
                     nodes.put("line", linePlot);                    
                 });  
 
@@ -444,7 +445,7 @@ public class GUIPane extends Application {
                     Gauge gauge = new Gauge();
                     gauge.setSkin(new HSkin(gauge));
 
-                    gridPane.add(gauge, 0, 2);
+                    gridPane.add(gauge, 2, 2);
                     nodes.put("gauge", gauge);                
                 });            
             
@@ -462,7 +463,6 @@ public class GUIPane extends Application {
         //*******************************
         //CREATING GAUGE LISTS + LISTENERS
         //*******************************
-            
         ListView <Item> dataView = new ListView<>();
                 
         //TODO: make dynamic
@@ -492,12 +492,7 @@ public class GUIPane extends Application {
                 });                
             }    
         
-        dataView.setCellFactory(CheckBoxListCell.forListView(new Callback<Item, ObservableValue<Boolean>>() {
-            @Override 
-            public ObservableValue<Boolean> call(Item item) {
-                    return item.onProperty();
-        }
-                }));
+        dataView.setCellFactory(CheckBoxListCell.forListView((Item item) -> item.onProperty()));
         
         //create new tabpane on the left
         TabPane tabPaneLeft = new TabPane();
@@ -518,7 +513,7 @@ public class GUIPane extends Application {
         //********************************
         //Let's try and create a grid pane for the center
         gridPane = new GridPane();
-        //setting grid pane lines visible 
+        
         gridPane.setLayoutX(100);
         gridPane.setLayoutY(100);
 
@@ -537,6 +532,58 @@ public class GUIPane extends Application {
 
         gridPane.getColumnConstraints().addAll(column1width, column2width, column3width);
         gridPane.getRowConstraints().addAll(row1Height, row2Height, row3Height);
+                
+        //add text fields to hboxes 
+        TextField speedField = new TextField();
+        TextField areaField = new TextField();
+        TextField singleField = new TextField();
+        TextField toggleField = new TextField();
+        TextField xyField = new TextField();
+        TextField timeField = new TextField();
+        
+        //adding comboboxes to hboxes
+        final ComboBox speedCombo = new ComboBox(dataView.getItems());
+        final ComboBox areaCombo = new ComboBox(dataView.getItems());
+        final ComboBox singleCombo = new ComboBox(dataView.getItems());
+        final ComboBox toggleCombo = new ComboBox(dataView.getItems());
+        final ComboBox xyCombo = new ComboBox(dataView.getItems());
+        final ComboBox timeCombo = new ComboBox(dataView.getItems());
+        
+        
+        //TODO: create action event for combo boxes
+        HBox hbox1 = new HBox(); 
+        HBox hbox2 = new HBox();
+        
+        hbox1.getChildren().addAll(toggleField, toggleCombo);
+        hbox2.getChildren().addAll(areaField, areaCombo);
+        
+        HBox hbox3 = new HBox(); 
+        HBox hbox4 = new HBox();
+        
+        hbox3.getChildren().addAll(timeField, timeCombo);
+        hbox4.getChildren().addAll(singleField, singleCombo);
+        
+        HBox hbox5 = new HBox();
+        HBox hbox6 = new HBox();
+        
+        hbox5.getChildren().addAll(xyField, xyCombo);
+        hbox6.getChildren().addAll(speedField, speedCombo);
+        
+        VBox vbox1 = new VBox();
+        vbox1.setSpacing(220);
+        vbox1.getChildren().addAll(hbox1, hbox2);
+        
+        VBox vbox2 = new VBox(); 
+        vbox2.setSpacing(220);
+        vbox2.getChildren().addAll(hbox3, hbox4);
+        
+        VBox vbox3 = new VBox();
+        vbox3.setSpacing(220);
+        vbox3.getChildren().addAll(hbox5, hbox6);
+        
+        gridPane.add(vbox1, 0, 1);  
+        gridPane.add(vbox2, 1, 1);
+        gridPane.add(vbox3, 2, 1);
         
         //ToggleButton centerText = new ToggleButton("Center All Text");
 
