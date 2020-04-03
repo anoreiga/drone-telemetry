@@ -14,6 +14,7 @@ import org.apache.commons.io.*;
 //********************
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import static com.microsoft.schemas.office.excel.STTrueFalseBlank.Factory.newValue;
 //********************
 //JAVA IMPORTS
 //********************
@@ -106,9 +107,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import javafx.beans.value.ChangeListener;
+import javafx.scene.control.ListView;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.cell.CheckBoxListCell;
 
 /**
  *
@@ -334,32 +337,47 @@ public class GUIPane extends Application {
         //add toolbar here if wanted
         vbox.getChildren().addAll(menuBar);
 
-        CheckBoxTreeItem<String> gaugeRootItem = new CheckBoxTreeItem<>("Gauge List");
+        ListView <Item> gaugeView = new ListView<>();
+                
+        Item toggleGauge = new Item("Toggle Gauge ", false);
+        Item singleGauge = new Item("Single Character Gauge ", false);
+        Item textGauge = new Item("Text Gauge ", false);
+        Item barGauge = new Item("Bar Gauge ", false);
+        Item speedGauge = new Item("Speedometer Gauge ", false);
+                    
+        gaugeView.getItems().addAll(toggleGauge, singleGauge, textGauge, barGauge, speedGauge);        
+                
+            for (int i=0; i <= gaugeView.getItems().size(); i++) 
+            {    
+                //observe item's on property and display message when true 
+                toggleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(toggleGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                });
 
-        gaugeRootItem.getChildren().addAll(
-                new CheckBoxTreeItem<>("Bar Plot"),
-                new CheckBoxTreeItem<>("XY Plot"),
-                new CheckBoxTreeItem<>("X Plot"),
-                new CheckBoxTreeItem<>("Circle"),
-                new CheckBoxTreeItem<>("Number/Single Character"),
-                new CheckBoxTreeItem<>("Text"),
-                new CheckBoxTreeItem<>("Clock"),
-                new CheckBoxTreeItem<>("Stopwatch"),
-                new CheckBoxTreeItem<>("Running time"),
-                new CheckBoxTreeItem<>("On/Off Light"));
+                singleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(singleGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                });
 
-        TreeView<String> tv = new TreeView<String>(gaugeRootItem);
+                textGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(textGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                });
 
-        final Callback<TreeItem<String>, ObservableValue<Boolean>> getSelectedProperty
-                = (TreeItem<String> item) -> {
-                    if (item instanceof CheckBoxTreeItem<?>) {
-                        return ((CheckBoxTreeItem<?>) item).selectedProperty();
-                    }
-                    return null;
-                };
+                barGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(barGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                });  
 
-        tv.setCellFactory(p -> new CheckBoxTreeCell<>(getSelectedProperty));
-        tv.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                speedGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(speedGauge.getName() + " changed on state from "+wasOn+" to "+isNowOn);
+                });            
+            
+            }
+        
+        gaugeView.setCellFactory(CheckBoxListCell.forListView(new Callback<Item, ObservableValue<Boolean>>() {
+            @Override 
+            public ObservableValue<Boolean> call(Item item) {
+                    return item.onProperty();
+        }
+                }));
 
         //add tree items for data columns 
         //TODO: make dynamic 
@@ -393,11 +411,11 @@ public class GUIPane extends Application {
         TabPane tabPaneLeft = new TabPane();
 
         //set the tabs 
-        Tab gaugeTab = new Tab("Select Gauges");
         Tab dataTab = new Tab("Select Data Columns");
+        Tab gaugeTab = new Tab("Select Gauges");
 
         //fill the tabs with content from the checkbox tree view item lists
-        gaugeTab.setContent(tv);
+        gaugeTab.setContent(gaugeView);
         dataTab.setContent(tv2);
 
         //add the tab pane content to the left tab pane
@@ -464,13 +482,13 @@ public class GUIPane extends Application {
         
         //adding a toggle switch to the grid pane 
         ToggleSwitch button = new ToggleSwitch();
-        gridPane.add(button, 2, 1);
+        gridPane.add(button, 1, 1);
         nodes.put("button", button);
 
         //creating a new speedometer 
         Gauge gauge = new Gauge();
         gauge.setSkin(new HSkin(gauge));
-        gauge.addTickLabelSection((new Section(100, 150)));
+        
 
         gridPane.add(gauge, 0, 2);
         nodes.put("gauge", gauge);
@@ -512,22 +530,6 @@ public class GUIPane extends Application {
         
         gridPane.add(ta, 0, 0);
         nodes.put("ta", ta);
-        
-        //Create event handler to insert gauge image into center
-        CheckBoxTreeItem<String> rootItem = new CheckBoxTreeItem<String>("Root");
-        rootItem.setExpanded(true);
-
-        final TreeView<String> tree = new TreeView<String>(gaugeRootItem);
-        tree.setEditable(true);
-
-        tree.setCellFactory(CheckBoxTreeCell.<String>forTreeView());
-
-        for (int i = 0; i < 8; i++) {
-
-            gaugeRootItem.selectedProperty().addListener((obs, oldVal, newVal) -> {
-                System.out.println(gaugeRootItem.getValue() + " selection state: " + newVal);
-            });
-        }
 
         //*****************************************
         //PLAYBACK BUTTONS 
@@ -863,5 +865,4 @@ public class GUIPane extends Application {
             return locations;
         }
     }
-
 }
