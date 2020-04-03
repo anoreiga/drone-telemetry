@@ -352,6 +352,12 @@ public class GUIPane extends Application {
                 //observe item's on property and display message when true 
                 toggleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
                     System.out.println(toggleGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                //adding a toggle switch to the grid pane 
+                ToggleSwitch toggleSwitch = new ToggleSwitch();
+                gridPane.add(toggleSwitch, 1, 1);
+                nodes.put("button", toggleSwitch);           
+                
                 });
 
                 singleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
@@ -480,10 +486,6 @@ public class GUIPane extends Application {
         gridPane.add(linePlot, 1, 0);
         nodes.put("line", linePlot);
         
-        //adding a toggle switch to the grid pane 
-        ToggleSwitch button = new ToggleSwitch();
-        gridPane.add(button, 1, 1);
-        nodes.put("button", button);
 
         //creating a new speedometer 
         Gauge gauge = new Gauge();
