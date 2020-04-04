@@ -9,13 +9,12 @@ package guipane;
 //APACHE IMPORTS
 //********************
 import org.apache.commons.io.*;
-
 //********************
 //GOOGLE IMPORTS
 //********************
 import com.google.gson.Gson;
-import com.thoughtworks.xstream.XStream;
-
+import com.google.gson.reflect.TypeToken;
+import static com.microsoft.schemas.office.excel.STTrueFalseBlank.Factory.newValue;
 //********************
 //JAVA IMPORTS
 //********************
@@ -46,8 +45,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.chart.BarChart;
-import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -95,9 +92,15 @@ import javafx.util.converter.DoubleStringConverter;
 //MEDUSA IMPORTS
 //********************
 import eu.hansolo.medusa.*;
+import eu.hansolo.medusa.skins.DashboardSkin;
 import eu.hansolo.medusa.skins.GaugeSkin;
+import eu.hansolo.medusa.skins.HSkin;
 import eu.hansolo.medusa.skins.PlainClockSkin;
+import eu.hansolo.medusa.skins.SimpleDigitalSkin;
+import eu.hansolo.medusa.skins.SlimClockSkin;
 import eu.hansolo.medusa.skins.SlimSkin;
+import java.io.FileReader;
+import java.io.Reader;
 
 //********************
 //JAVA IMPORTS
@@ -105,6 +108,16 @@ import eu.hansolo.medusa.skins.SlimSkin;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListView;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.ToolBar;
+import javafx.scene.control.cell.CheckBoxListCell;
 
 /**
  *
@@ -113,9 +126,16 @@ import java.util.Map;
  */
 public class GUIPane extends Application {
     
-    private String[] cells = new String[9];
+    //This HashMap is used to map the nodes in the GridPane to ids, 
+    //so that they can be identified later and their locations within
+    //the GridPane written to a file
     private HashMap<String, Object> nodes = new HashMap<>();
+    //This global variable will allow the GridPane to be accessed outside 
+    //of the createBorderPane method
     private GridPane gridPane = null;
+    
+    //global variable for data frequency
+    private Label dataFreq = new Label();
 
     public static void main(String[] args) { 
 
@@ -123,7 +143,7 @@ public class GUIPane extends Application {
     }
 
     @Override
-    public void start(Stage stage) throws Exception {
+    public void start(Stage primaryStage) throws Exception {
 
         BorderPane borderPane = new BorderPane();
 
@@ -132,10 +152,10 @@ public class GUIPane extends Application {
         Scene scene = new Scene(createBorderPane(borderPane.getChildren()), 1000, 1000);
         scene.getStylesheets().add("/guipane/css/styles.css");
 
-        stage.setTitle("Gauge/Data Column Selection");
+        primaryStage.setTitle("Gauge/Data Column Selection");
 
-        stage.setScene(scene);
-        stage.show();
+        primaryStage.setScene(scene);
+        primaryStage.show();
 
     }
 
@@ -283,31 +303,28 @@ public class GUIPane extends Application {
         });
 
         MenuItem helpItem = new MenuItem("Help Contents");
-        helpItem.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent event) {
-                Stage popupHelp = new Stage();
-                //popupAbout.initStyle(StageStyle.UTILITY);
-                popupHelp.initModality(Modality.APPLICATION_MODAL);
-                popupHelp.setTitle("Help Contents");
-
-                //creating a help menu 
-                Menu infoMenu = new Menu("Info");
-                //infoMenu.getItems().addAll(new MenuItem("Creating a Gauge", new MenuItem());
-
-                //creating a menu bar
-                MenuBar infoBar = new MenuBar();
-                infoBar.getMenus().addAll(infoMenu);
-
-                //adding the menu bar to the popup window 
-                //creating a layout for the text area 
-                VBox vbox = new VBox(infoBar);
-
-                //creating the popup scene 
-                Scene helpScene = new Scene(vbox, 500, 500);
-                popupHelp.setScene(helpScene);
-                popupHelp.showAndWait();
-
-            }
+        helpItem.setOnAction((ActionEvent event) -> {
+            Stage popupHelp = new Stage();
+            //popupAbout.initStyle(StageStyle.UTILITY);
+            popupHelp.initModality(Modality.APPLICATION_MODAL);
+            popupHelp.setTitle("Help Contents");
+            
+            //creating a help menu
+            Menu infoMenu = new Menu("Info");
+            //infoMenu.getItems().addAll(new MenuItem("Creating a Gauge", new MenuItem());
+            
+            //creating a menu bar
+            MenuBar infoBar = new MenuBar();
+            infoBar.getMenus().addAll(infoMenu);
+            
+            //adding the menu bar to the popup window
+            //creating a layout for the text area
+            VBox vbox = new VBox(infoBar);
+            
+            //creating the popup scene
+            Scene helpScene = new Scene(vbox, 500, 500);
+            popupHelp.setScene(helpScene);
+            popupHelp.showAndWait();
         });
 
         //creating the Help menu
@@ -317,77 +334,192 @@ public class GUIPane extends Application {
         //add all the menus to the menu bar
         menuBar.getMenus().addAll(fileMenu, editMenu, helpMenu);
 
-        //ToolBar toolbar = new ToolBar(new Button("New"), new Button("Open"));
+        //ToolBar toolBar = new ToolBar(new Button("New"), new Button("Open"));
         VBox vbox = new VBox();
 
         //add toolbar here if wanted
         vbox.getChildren().addAll(menuBar);
+        
+        //*******************************
+        //CREATING GAUGE LISTS + LISTENERS
+        //*******************************
+            
+        ListView <Item> gaugeView = new ListView<>();
+                
+        Item toggleGauge = new Item("Toggle Gauge ", false);
+        Item singleGauge = new Item("Single Character Gauge ", false);
+        Item textGauge = new Item("Text Gauge ", false);
+        Item barGauge = new Item("XY Plot Gauge ", false);
+        Item speedGauge = new Item("Speedometer Gauge ", false);
+        Item timeGauge = new Item("Timestamp Gauge ", false);            
+        
+        gaugeView.getItems().addAll(toggleGauge, singleGauge, textGauge, barGauge, speedGauge, timeGauge);        
+                
+            for (int i=0; i <= gaugeView.getItems().size(); i++) 
+            {    
+                //observe item's on property and display message when true 
+                toggleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(toggleGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //adding a toggle switch to the grid pane 
+                    ToggleSwitch toggleSwitch = new ToggleSwitch();
+                    gridPane.add(toggleSwitch, 0, 0);
+                    nodes.put("button", toggleSwitch);    
+                    
+                });
+                
+                //observe item's on property and display message when true 
+                timeGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(timeGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //adding a toggle switch to the grid pane 
+                    Clock timestamp = new Clock();
+                    timestamp.setSkin(new SlimClockSkin(timestamp));
+                    
+                    gridPane.add(timestamp, 1, 0);
+                    nodes.put("timestamp", timestamp);    
+                    
+                });    
+                
+                singleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(singleGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //adding a single character display to the grid pane
+                    TextArea tf = new TextArea();
+                    PseudoClass centered = PseudoClass.getPseudoClass("centered");
 
-        CheckBoxTreeItem<String> gaugeRootItem = new CheckBoxTreeItem<>("Gauge List");
+                    Pattern validDoubleText = Pattern.compile("-?((\\d*)|(\\d+\\.\\d*))");
 
-        gaugeRootItem.getChildren().addAll(
-                new CheckBoxTreeItem<>("Bar Plot"),
-                new CheckBoxTreeItem<>("XY Plot"),
-                new CheckBoxTreeItem<>("X Plot"),
-                new CheckBoxTreeItem<>("Circle"),
-                new CheckBoxTreeItem<>("Number/Single Character"),
-                new CheckBoxTreeItem<>("Text"),
-                new CheckBoxTreeItem<>("Clock"),
-                new CheckBoxTreeItem<>("Stopwatch"),
-                new CheckBoxTreeItem<>("Running time"),
-                new CheckBoxTreeItem<>("On/Off Light"));
+                    TextFormatter<Double> textFormatter = new TextFormatter<>(new DoubleStringConverter(), 0.0,
+                            change -> {
+                                String newText = change.getControlNewText();
+                                if (validDoubleText.matcher(newText).matches()) {
+                                    return change;
+                                } else {
+                                    return null;
+                                }
+                            });
 
-        TreeView<String> tv = new TreeView<String>(gaugeRootItem);
+                    tf.setTextFormatter(textFormatter);
 
-        final Callback<TreeItem<String>, ObservableValue<Boolean>> getSelectedProperty
-                = (TreeItem<String> item) -> {
-                    if (item instanceof CheckBoxTreeItem<?>) {
-                        return ((CheckBoxTreeItem<?>) item).selectedProperty();
-                    }
-                    return null;
-                };
+                    tf.setFont(Font.font("times new roman", 70)); //setting the font and font size
 
-        tv.setCellFactory(p -> new CheckBoxTreeCell<>(getSelectedProperty));
-        tv.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                    gridPane.add(tf, 1, 2);
+                    nodes.put("tf", tf);                      
+                });
+
+                textGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(textGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //adding text area to the grid pane
+                    TextArea ta = new TextArea();
+
+                    gridPane.add(ta, 0, 2);
+                    nodes.put("ta", ta);                    
+                                  
+                });
+
+                barGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(barGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //adding a line chart display to the grid pane 
+                    //defining the x axis
+                    NumberAxis lineX = new NumberAxis(1960, 2020, 10);
+                    lineX.setLabel("Years");
+
+                    //defining the y axis 
+                    NumberAxis lineY = new NumberAxis(0, 350, 50);
+                    lineY.setLabel("No. of schools");
+
+                    //creating the line chart 
+                    LineChart linePlot = new LineChart(lineX, lineY);
+
+                    //setting the chart data 
+                    //TODO: make dynamic 
+                    XYChart.Series series = new XYChart.Series();
+                    series.setName("No of schools in a year");
+
+                    series.getData().add(new XYChart.Data(1970, 15));
+                    series.getData().add(new XYChart.Data(1980, 30));
+                    series.getData().add(new XYChart.Data(1990, 60));
+                    series.getData().add(new XYChart.Data(2000, 120));
+                    series.getData().add(new XYChart.Data(2013, 240));
+                    series.getData().add(new XYChart.Data(2014, 300));
+
+                    //setting the data to line chart 
+                    linePlot.getData().add(series);
+
+                    //adding the chart to grid pane 
+                    gridPane.add(linePlot, 2, 0);
+                    nodes.put("line", linePlot);                    
+                });  
+
+                speedGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(speedGauge.getName() + " changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //creating a new speedometer 
+                    Gauge gauge = new Gauge();
+                    gauge.setSkin(new HSkin(gauge));
+
+                    gridPane.add(gauge, 2, 2);
+                    nodes.put("gauge", gauge);                
+                });            
+            
+            }
+        
+        gaugeView.setCellFactory(CheckBoxListCell.forListView(new Callback<Item, ObservableValue<Boolean>>() {
+            @Override 
+            public ObservableValue<Boolean> call(Item item) {
+                    return item.onProperty();
+        }
+                }));
 
         //add tree items for data columns 
         //TODO: make dynamic 
-        CheckBoxTreeItem<String> dataRootItem = new CheckBoxTreeItem<>("Data Columns");
-        dataRootItem.setExpanded(true);
-
-        dataRootItem.getChildren().addAll(
-                new CheckBoxTreeItem<String>("BATTERY"),
-                new CheckBoxTreeItem<String>("YAW"),
-                new CheckBoxTreeItem<String>("PITCH"),
-                new CheckBoxTreeItem<String>("TIMESTAMP"));
-
-        //TreeView<String> tv2 = new TreeView<>(dataRootItem);
-        //tv2.setCellFactory(p2 -> new CheckBoxTreeCell<>(getSelectedProperty));
-        //tv2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        dataRootItem.addEventHandler(
-                CheckBoxTreeItem.<Path>checkBoxSelectionChangedEvent(),
-                (TreeModificationEvent<Path> e) -> {
-                    CheckBoxTreeItem<Path> item = e.getTreeItem();
-                    if (item.isSelected() || item.isIndeterminate()) {
-                        System.out.println("Some items are checked");
-                    } else {
-                        System.out.println("Some items are unchecked");
-                    }
+        //*******************************
+        //CREATING GAUGE LISTS + LISTENERS
+        //*******************************
+        ListView <Item> dataView = new ListView<>();
+                
+        //TODO: make dynamic
+        Item battery = new Item("BATTERY ", false);
+        Item pitch = new Item("PITCH ", false);
+        Item yaw = new Item("YAW ", false);
+        Item timestamp = new Item("TIMESTAMP ", false);
+                    
+        dataView.getItems().addAll(timestamp, pitch, yaw, battery);        
+                
+            for (int i=0; i <= dataView.getItems().size(); i++) 
+            {      
+                battery.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(battery.getName() + "changed on state from "+wasOn+" to "+isNowOn);
                 });
-
-        TreeView<String> tv2 = new TreeView<>(dataRootItem);
-        tv2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
+                
+                pitch.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(pitch.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                });
+                
+                yaw.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(yaw.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                });
+                
+                timestamp.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(timestamp.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                });                
+            }    
+        
+        dataView.setCellFactory(CheckBoxListCell.forListView((Item item) -> item.onProperty()));
+        
         //create new tabpane on the left
         TabPane tabPaneLeft = new TabPane();
 
         //set the tabs 
-        Tab gaugeTab = new Tab("Select Gauges");
         Tab dataTab = new Tab("Select Data Columns");
+        Tab gaugeTab = new Tab("Select Gauges");
 
         //fill the tabs with content from the checkbox tree view item lists
-        gaugeTab.setContent(tv);
-        dataTab.setContent(tv2);
+        gaugeTab.setContent(gaugeView);
+        dataTab.setContent(dataView);
 
         //add the tab pane content to the left tab pane
         tabPaneLeft.getTabs().addAll(gaugeTab, dataTab);
@@ -397,7 +529,7 @@ public class GUIPane extends Application {
         //********************************
         //Let's try and create a grid pane for the center
         gridPane = new GridPane();
-        //setting grid pane lines visible 
+        
         gridPane.setLayoutX(100);
         gridPane.setLayoutY(100);
 
@@ -416,174 +548,60 @@ public class GUIPane extends Application {
 
         gridPane.getColumnConstraints().addAll(column1width, column2width, column3width);
         gridPane.getRowConstraints().addAll(row1Height, row2Height, row3Height);
-
-        //adding text area to the grid pane
-        TextArea ta = new TextArea();
-
-        //adding the BarGauge to the grid display 
-        //x and y axis
-        final String A = "Height [h]";
-        final String B = "Horizontal Speed [m/h]";
-        final String C = "Vertical Speed [m/v]";
-
-        final NumberAxis x = new NumberAxis();
-        final CategoryAxis y = new CategoryAxis();
-//create bar chart
-        final BarChart<Number, String> b
-                = new BarChart<Number, String>(x, y);
-        b.setTitle("Flight Data (Units: Metric)");
-//set title for x axis
-        x.setLabel("Category");
-        x.setTickLabelRotation(90);
-//set title for y axis
-        y.setLabel("Measurement");
-//dataset on 1999
-        XYChart.Series s1 = new XYChart.Series();
-        s1.setName("Height [h]");
-        s1.getData().add(new XYChart.Data(10, A));
-        s1.getData().add(new XYChart.Data(60, B));
-        s1.getData().add(new XYChart.Data(30, C));
-//dataset on 2009
-        XYChart.Series s2 = new XYChart.Series();
-        s2.setName("Horizontal Speed [m/h]");
-        s2.getData().add(new XYChart.Data(50, A));
-        s2.getData().add(new XYChart.Data(30, C));
-        s2.getData().add(new XYChart.Data(20, B));
-//dataset on 2019
-        XYChart.Series S3 = new XYChart.Series();
-        S3.setName("Vertical Speed [m/v]");
-        S3.getData().add(new XYChart.Data(70, A));
-        S3.getData().add(new XYChart.Data(25, B));
-        S3.getData().add(new XYChart.Data(5, C));
-
-        b.getData().addAll(s1, s2, S3);
-
-        gridPane.add(b, 0, 2);
-        cells[2] = "bar";
-        nodes.put("bar", b);
-
-        //adding a line chart display to the grid pane 
-        //defining the x axis
-        NumberAxis lineX = new NumberAxis(1960, 2020, 10);
-        lineX.setLabel("Years");
-
-        //defining the y axis 
-        NumberAxis lineY = new NumberAxis(0, 350, 50);
-        lineY.setLabel("No. of schools");
-
-        //creating the line chart 
-        LineChart linePlot = new LineChart(lineX, lineY);
-
-        //setting the chart data 
-        //TODO: make dynamic 
-        XYChart.Series series = new XYChart.Series();
-        series.setName("No of schools in a year");
-
-        series.getData().add(new XYChart.Data(1970, 15));
-        series.getData().add(new XYChart.Data(1980, 30));
-        series.getData().add(new XYChart.Data(1990, 60));
-        series.getData().add(new XYChart.Data(2000, 120));
-        series.getData().add(new XYChart.Data(2013, 240));
-        series.getData().add(new XYChart.Data(2014, 300));
-
-        //setting the data to line chart 
-        linePlot.getData().add(series);
-
-        //adding the chart to grid pane 
-        gridPane.add(linePlot, 1, 0);
-        cells[3] = "line";
-        nodes.put("line", linePlot);
-        //creating a new clock
-        Clock clock = new Clock();
-
-        clock.setSkin(new PlainClockSkin(clock));
-
-        //TODO: make dynamic
-        clock.setTitle("Speedometer");
-        //gauge.setUnit("MPH");
-
-        //adding the clock to grid pane 
-        gridPane.add(clock, 1, 1);
-        cells[4] = "clock";
-        nodes.put("clock", clock);
+                
+        //add text fields to hboxes 
+        TextField speedField = new TextField("Speedometer Gauge");
+        TextField areaField = new TextField("TextArea Gauge");
+        TextField singleField = new TextField("Single Character Gauge");
+        TextField toggleField = new TextField("On/Off Switch Gauge");
+        TextField xyField = new TextField("XY Plot Gauge");
+        TextField timeField = new TextField("Timestamp Gauge");
         
-        //adding a toggle switch to the grid pane 
-        ToggleSwitch button = new ToggleSwitch();
-        gridPane.add(button, 2, 1);
-        cells[7] = "button";
-        nodes.put("button", button);
+        //adding comboboxes to hboxes
+        final ComboBox speedCombo = new ComboBox(dataView.getItems());
+        final ComboBox areaCombo = new ComboBox(dataView.getItems());
+        final ComboBox singleCombo = new ComboBox(dataView.getItems());
+        final ComboBox toggleCombo = new ComboBox(dataView.getItems());
+        final ComboBox xyCombo = new ComboBox(dataView.getItems());
+        final ComboBox timeCombo = new ComboBox(dataView.getItems());
         
-        //adding a circle gauge
-        Gauge circle = new Gauge();
-        circle.setSkin(new SlimSkin(circle));
-
-        gridPane.add(circle, 2, 0);
-        cells[6] = "circle";
-        nodes.put("circle", circle);
-
-        //creating a new speedometer 
-        Gauge gauge = new Gauge();
-        gauge.setSkin(new GaugeSkin(gauge));
-
-        gridPane.add(gauge, 1, 2);
-        cells[5] = "gauge";
-        nodes.put("gauge", gauge);
-
-        //adding a single character display to the grid pane
-        TextArea tf = new TextArea();
-        PseudoClass centered = PseudoClass.getPseudoClass("centered");
-
-        Pattern validDoubleText = Pattern.compile("-?((\\d*)|(\\d+\\.\\d*))");
-
-        TextFormatter<Double> textFormatter = new TextFormatter<Double>(new DoubleStringConverter(), 0.0,
-                change -> {
-                    String newText = change.getControlNewText();
-                    if (validDoubleText.matcher(newText).matches()) {
-                        return change;
-                    } else {
-                        return null;
-                    }
-                });
-
-        tf.setTextFormatter(textFormatter);
-
-        textFormatter.valueProperty().addListener((obs, oldValue, newValue) -> {
-            System.out.println("New double value " + newValue);
-        });
-
-        tf.setFont(Font.font("times new roman", 70)); //setting the font and font size
-
-        ToggleButton centerText = new ToggleButton("Center All Text");
-
-        centerText.selectedProperty().addListener((obs, wasCentered, isNowCentered)
-                -> tf.pseudoClassStateChanged(centered, isNowCentered));
-
-        centerText.selectedProperty().addListener((obs, wasCentered, isNowCentered)
-                -> ta.pseudoClassStateChanged(centered, isNowCentered));
-
-        gridPane.add(tf, 0, 1);
-        cells[1] = "tf";
-        nodes.put("tf", tf);
         
-        gridPane.add(ta, 0, 0);
-        cells[0] = "ta";
-        nodes.put("ta", ta);
+        //TODO: create action event for combo boxes
+        HBox hbox1 = new HBox(); 
+        HBox hbox2 = new HBox();
         
-        //Create event handler to insert gauge image into center
-        CheckBoxTreeItem<String> rootItem = new CheckBoxTreeItem<String>("Root");
-        rootItem.setExpanded(true);
-
-        final TreeView<String> tree = new TreeView<String>(gaugeRootItem);
-        tree.setEditable(true);
-
-        tree.setCellFactory(CheckBoxTreeCell.<String>forTreeView());
-
-        for (int i = 0; i < 8; i++) {
-
-            gaugeRootItem.selectedProperty().addListener((obs, oldVal, newVal) -> {
-                System.out.println(gaugeRootItem.getValue() + " selection state: " + newVal);
-            });
-        }
+        hbox1.getChildren().addAll(toggleField, toggleCombo);
+        hbox2.getChildren().addAll(areaField, areaCombo);
+        
+        HBox hbox3 = new HBox(); 
+        HBox hbox4 = new HBox();
+        
+        hbox3.getChildren().addAll(timeField, timeCombo);
+        hbox4.getChildren().addAll(singleField, singleCombo);
+        
+        HBox hbox5 = new HBox();
+        HBox hbox6 = new HBox();
+        
+        hbox5.getChildren().addAll(xyField, xyCombo);
+        hbox6.getChildren().addAll(speedField, speedCombo);
+        
+        VBox vbox1 = new VBox();
+        vbox1.setSpacing(220);
+        vbox1.getChildren().addAll(hbox1, hbox2);
+        
+        VBox vbox2 = new VBox(); 
+        vbox2.setSpacing(220);
+        vbox2.getChildren().addAll(hbox3, hbox4);
+        
+        VBox vbox3 = new VBox();
+        vbox3.setSpacing(220);
+        vbox3.getChildren().addAll(hbox5, hbox6);
+        
+        gridPane.add(vbox1, 0, 1);  
+        gridPane.add(vbox2, 1, 1);
+        gridPane.add(vbox3, 2, 1);
+        
+        //ToggleButton centerText = new ToggleButton("Center All Text");
 
         //*****************************************
         //PLAYBACK BUTTONS 
@@ -725,16 +743,100 @@ public class GUIPane extends Application {
         );
         timeline.setCycleCount(Animation.INDEFINITE);
         timeline.play();
+ 
+        //************************
+        //DATA FREQUENCY 
+        //************************        
 
+        //create data frequency button 
+        Button dataButton = new Button("Set Data Frequency");
+        
+        //open a new window when the toggle button is pressed
+        dataButton.setOnAction((ActionEvent event) -> {
+            Label dataLabel = new Label("Select data frequency:");
+            
+            HBox dataMenu = new HBox();
+            
+            dataMenu.setAlignment(Pos.CENTER);
+            dataMenu.alignmentProperty().isBound();
+            dataMenu.setSpacing(5);
+            
+            final ToggleGroup group = new ToggleGroup();
+            
+            RadioButton data1 = new RadioButton("1");
+            data1.setToggleGroup(group);
+            data1.setSelected(true);
+            data1.requestFocus();
+            
+            RadioButton data2 = new RadioButton("1.5");
+            data2.setToggleGroup(group);
+            data2.setSelected(true);            
+            data2.requestFocus();
+            
+            RadioButton data3 = new RadioButton("2");
+            data3.setToggleGroup(group);
+            data3.setSelected(true);            
+            data3.requestFocus();
+            
+            RadioButton data4 = new RadioButton("-1");
+            data4.setToggleGroup(group);
+            data4.setSelected(true);            
+            data4.requestFocus();
+                                    
+            Label labelInfo = new Label();
+            labelInfo.setTextFill(Color.BLUE);
+            
+            dataFreq.setTextFill(Color.WHITE);
+            dataFreq.setFont(new Font(15));
+            dataFreq.getBorder();
+            
+            group.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+                @Override
+                public void changed(ObservableValue<? extends Toggle> ov, Toggle old_toggle, Toggle new_toggle) {
+                    //has selection
+                    if (group.getSelectedToggle() != null) {
+                        RadioButton button = (RadioButton) group.getSelectedToggle();
+                        System.out.println("Button: " + button.getText());
+                        labelInfo.setText("Your new data frequency is: " + button.getText() + " update(s) per second");
+                        dataFreq.setText("Current Data Frequency: " + button.getText() + " update(s) per second");
+                        
+                        
+                    }
+                }
+            });
+            
+            dataMenu.getChildren().addAll(data4, data1, data2, data3);
+            
+            VBox secondaryLayout = new VBox();
+            secondaryLayout.setSpacing(10);
+            secondaryLayout.getChildren().addAll(dataLabel, dataMenu, labelInfo);
+            
+            Scene secondScene = new Scene(secondaryLayout, 330, 150);
+            
+            //new window
+            Stage newWindow = new Stage();
+            newWindow.setTitle("Data Frequency");
+            newWindow.setScene(secondScene);
+            
+            //specify modality for the new window
+            newWindow.initModality(Modality.WINDOW_MODAL);
+            
+            newWindow.show();
+        });
+                
         //display the current time property
         //TODO: add time listener to timestamp cell in spreadsheet
         //TODO: add updateValues() method 
+        
+        
         //add buttons to the playback menu
-        playbackMenu.getChildren().addAll(reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton, timeStamp, centerText);
+        //add centertext button here when fix
+        playbackMenu.getChildren().addAll(reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton, timeStamp, dataButton, dataFreq);
 
         //************************
         //BORDER PANE SETUP 
         //************************
+        
         //setting up the border pane
         borderPane.setTop(vbox);
         borderPane.setLeft(tabPaneLeft);
@@ -746,12 +848,10 @@ public class GUIPane extends Application {
         return borderPane;
     }
 
-//***********************
-//  VENTURE BEHIND THIS POINT AND RISK THY SANITY
-//  PROCEED AT THY OWN RISK
-//***********************
-//saving function 
-    
+
+    //************************
+    //SAVING FUNCTION 
+    //************************
     
     private void saveFile(ObservableList<Node> children) throws IOException {
         FileChooser fileChooser = new FileChooser();
@@ -759,12 +859,17 @@ public class GUIPane extends Application {
 
         File file = fileChooser.showSaveDialog(new Stage());
         if (file != null) {
-            Values values = new Values();
+            
+            //Create a new values object, in order to store and write the current
+            //state of the GridPane's cells to a file
+            Values values = new Values(gridPane);
             
             String charsetAsString = String.valueOf(StandardCharsets.UTF_8);
+            
+            //Write the array of node ids to a file using Gson
             try {
-                XStream xstream = new XStream();
-                String output = xstream.toXML(values.getCells());
+                Gson gson = new Gson();
+                String output = gson.toJson(values.getCells());
                 FileUtils.writeStringToFile(file, output, charsetAsString);
             } catch (IOException ex) {
                 Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
@@ -772,7 +877,11 @@ public class GUIPane extends Application {
         }
     }
     
-       private void loadFile(ObservableList<Node> children) throws IOException {
+    //************************
+    //LOADING FUNCTION 
+    //************************       
+    
+    private void loadFile(ObservableList<Node> children) throws IOException {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Load Previous Layout");
         File file = fileChooser.showOpenDialog(new Stage());
@@ -781,15 +890,23 @@ public class GUIPane extends Application {
             
             String charsetAsString = String.valueOf(StandardCharsets.UTF_8);
             
-            XStream xstream = new XStream();
-                        
-            String[] arr = (String[]) xstream.fromXML(file);
+            //Use Gson to read file into a string array
+            Gson gson = new Gson();
+            java.lang.reflect.Type type = new TypeToken<String[]>(){}.getType();
+            String[] arr = null;
+            try(Reader input = new FileReader(file)){
+                arr = (String[]) gson.fromJson(input, String[].class);
+            }
             
+            //Clear the gridpane
             Iterator mapIter = nodes.entrySet().iterator();
             while(mapIter.hasNext()){
                 Map.Entry i = (Map.Entry) mapIter.next();
                 gridPane.getChildren().remove(i.getValue());
             }
+            
+            //Put the nodes into their appropriate positions within the GridPane
+            //based on the locations of their ids within the array
             for(int i = 0; i < arr.length; i++){
                 if(arr[i] != null){
                     int x = (i+1)/3;
@@ -806,9 +923,24 @@ public class GUIPane extends Application {
     }
 
     private class Values {
-
-        String[] locations = cells;
-
+        
+        String[] locations = new String[9];
+        
+        public Values(GridPane pane){
+            //Get the current location of each node in the gridpane, and store its
+            //corresponding id from the HashMap in the appropriate location in a string array
+            pane.getChildren().forEach(node ->{
+            Iterator mapIter = nodes.entrySet().iterator();
+            while(mapIter.hasNext()){
+                Map.Entry i = (Map.Entry) mapIter.next();
+                if(i.getValue().equals(node)){
+                    locations[(GridPane.getColumnIndex(node) * 3) + GridPane.getRowIndex(node)] = (String) i.getKey();
+                }
+            }
+            });
+        }
+        
+        //Return the array of node ids
         public String[] getCells() {
             return locations;
         }
