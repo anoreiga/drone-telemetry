@@ -96,6 +96,8 @@ import eu.hansolo.medusa.skins.DashboardSkin;
 import eu.hansolo.medusa.skins.GaugeSkin;
 import eu.hansolo.medusa.skins.HSkin;
 import eu.hansolo.medusa.skins.PlainClockSkin;
+import eu.hansolo.medusa.skins.SimpleDigitalSkin;
+import eu.hansolo.medusa.skins.SlimClockSkin;
 import eu.hansolo.medusa.skins.SlimSkin;
 import java.io.FileReader;
 import java.io.Reader;
@@ -349,8 +351,9 @@ public class GUIPane extends Application {
         Item textGauge = new Item("Text Gauge ", false);
         Item barGauge = new Item("XY Plot Gauge ", false);
         Item speedGauge = new Item("Speedometer Gauge ", false);
-                    
-        gaugeView.getItems().addAll(toggleGauge, singleGauge, textGauge, barGauge, speedGauge);        
+        Item timeGauge = new Item("Timestamp Gauge ", false);            
+        
+        gaugeView.getItems().addAll(toggleGauge, singleGauge, textGauge, barGauge, speedGauge, timeGauge);        
                 
             for (int i=0; i <= gaugeView.getItems().size(); i++) 
             {    
@@ -364,6 +367,19 @@ public class GUIPane extends Application {
                     nodes.put("button", toggleSwitch);    
                     
                 });
+                
+                //observe item's on property and display message when true 
+                timeGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(timeGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //adding a toggle switch to the grid pane 
+                    Clock timestamp = new Clock();
+                    timestamp.setSkin(new SlimClockSkin(timestamp));
+                    
+                    gridPane.add(timestamp, 1, 0);
+                    nodes.put("timestamp", timestamp);    
+                    
+                });    
                 
                 singleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
                     System.out.println(singleGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
