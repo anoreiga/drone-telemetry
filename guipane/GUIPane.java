@@ -136,7 +136,7 @@ public class GUIPane extends Application {
     
     //global variable for data frequency
     private Label dataFreq = new Label();
-
+                       
     public static void main(String[] args) { 
 
         Application.launch(args);
@@ -355,37 +355,68 @@ public class GUIPane extends Application {
         
         gaugeView.getItems().addAll(toggleGauge, singleGauge, textGauge, barGauge, speedGauge, timeGauge);        
                 
-            for (int i=0; i <= gaugeView.getItems().size(); i++) 
+            for (Item item : gaugeView.getItems()) 
             {    
                 //observe item's on property and display message when true 
                 toggleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
                     System.out.println(toggleGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
-                    
-                    //adding a toggle switch to the grid pane 
+
                     ToggleSwitch toggleSwitch = new ToggleSwitch();
-                    gridPane.add(toggleSwitch, 0, 0);
-                    nodes.put("button", toggleSwitch);    
+                    
+                    if(isNowOn == true) {
+                        if(!gridPane.getChildren().contains(toggleSwitch)){
+                            //adding a toggle switch to the grid pane 
+                            gridPane.add(toggleSwitch, 0, 0);
+                            nodes.put("toggle", toggleSwitch);    
+
+                            System.out.println("Adding toggle switch..." + gridPane.getChildren().contains(toggleSwitch));
+                    
+                    }
+                    } else {
+                        
+                        gridPane.getChildren().forEach(node -> {
+                            if(node instanceof ToggleSwitch) {
+                                gridPane.getChildren().remove(node);
+                            }
+                        });
+                        
+                    }                       
                     
                 });
                 
                 //observe item's on property and display message when true 
                 timeGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
                     System.out.println(timeGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
-                    
                     //adding a toggle switch to the grid pane 
+                    
                     Clock timestamp = new Clock();
                     timestamp.setSkin(new SlimClockSkin(timestamp));
-                    
-                    gridPane.add(timestamp, 1, 0);
-                    nodes.put("timestamp", timestamp);    
+                     
+                    if(isNowOn == true) {
+                        if(!gridPane.getChildren().contains(timestamp)){
+                            gridPane.add(timestamp, 1, 0);
+                            nodes.put("timestamp", timestamp);
+
+                            System.out.println("Adding timestamp..." + gridPane.getChildren().contains(timestamp));
+
+                        }
+                        
+                    } else {
+                            gridPane.getChildren().forEach(node ->{
+                                if(node instanceof Clock){
+                                    gridPane.getChildren().remove(node);
+                                }
+                            
+                            });
+                    }                   
                     
                 });    
-                
+
                 singleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
                     System.out.println(singleGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
                     
                     //adding a single character display to the grid pane
-                    TextArea tf = new TextArea();
+                    TextField tf = new TextField();
                     PseudoClass centered = PseudoClass.getPseudoClass("centered");
 
                     Pattern validDoubleText = Pattern.compile("-?((\\d*)|(\\d+\\.\\d*))");
@@ -403,20 +434,41 @@ public class GUIPane extends Application {
                     tf.setTextFormatter(textFormatter);
 
                     tf.setFont(Font.font("times new roman", 70)); //setting the font and font size
-
-                    gridPane.add(tf, 1, 2);
-                    nodes.put("tf", tf);                      
+                    
+                    if(isNowOn == true) {
+                        if(!gridPane.getChildren().contains(tf)) {
+                            gridPane.add(tf, 1, 2);
+                            nodes.put("tf", tf);                           
+                        }
+                    } else {
+                            gridPane.getChildren().forEach(node ->{
+                                if(node instanceof TextField){
+                                    gridPane.getChildren().remove(node);
+                                }
+                            
+                            });                    
+                    }                   
                 });
 
                 textGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
                     System.out.println(textGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
                     
                     //adding text area to the grid pane
-                    TextArea ta = new TextArea();
-
-                    gridPane.add(ta, 0, 2);
-                    nodes.put("ta", ta);                    
-                                  
+                    TextArea ta = new TextArea();  
+                    
+                    if(isNowOn == true) {
+                        if(!gridPane.getChildren().contains(ta)) {
+                            gridPane.add(ta, 0, 2);
+                            nodes.put("ta", ta);                         
+                        }
+                    } else {
+                        gridPane.getChildren().forEach(node -> {
+                            if(node instanceof TextArea) {
+                                gridPane.getChildren().remove(node);
+                            }
+                        });
+                    }
+                    
                 });
 
                 barGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
@@ -449,9 +501,20 @@ public class GUIPane extends Application {
                     //setting the data to line chart 
                     linePlot.getData().add(series);
 
-                    //adding the chart to grid pane 
-                    gridPane.add(linePlot, 2, 0);
-                    nodes.put("line", linePlot);                    
+                    if(isNowOn == true) {
+                      if (!gridPane.getChildren().contains(linePlot)) {
+                        //adding the chart to grid pane 
+                        gridPane.add(linePlot, 2, 0);
+                        nodes.put("line", linePlot);                     
+                      }  
+                    } else {
+                            gridPane.getChildren().forEach(node ->{
+                                if(node instanceof LineChart){
+                                    gridPane.getChildren().remove(node);
+                                }
+                            
+                            });                    
+                    }
                 });  
 
                 speedGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
@@ -460,11 +523,22 @@ public class GUIPane extends Application {
                     //creating a new speedometer 
                     Gauge gauge = new Gauge();
                     gauge.setSkin(new HSkin(gauge));
-
-                    gridPane.add(gauge, 2, 2);
-                    nodes.put("gauge", gauge);                
+                    
+                    if(isNowOn == true) {
+                        if (!gridPane.getChildren().contains(gauge)) {
+                            //adding the gauge to the grid pane 
+                            gridPane.add(gauge, 2, 2);
+                            nodes.put("gauge", gauge);                          
+                        }
+                    } else {
+                        gridPane.getChildren().forEach(node -> {
+                            if(node instanceof Gauge) {
+                                gridPane.getChildren().remove(node);
+                            }
+                        });
+                    }
+              
                 });            
-            
             }
         
         gaugeView.setCellFactory(CheckBoxListCell.forListView(new Callback<Item, ObservableValue<Boolean>>() {
@@ -473,11 +547,9 @@ public class GUIPane extends Application {
                     return item.onProperty();
         }
                 }));
-
-        //add tree items for data columns 
-        //TODO: make dynamic 
+            
         //*******************************
-        //CREATING GAUGE LISTS + LISTENERS
+        //CREATING DATA LISTS + LISTENERS
         //*******************************
         ListView <Item> dataView = new ListView<>();
                 
