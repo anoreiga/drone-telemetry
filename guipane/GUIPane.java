@@ -210,7 +210,7 @@ public class GUIPane extends Application {
 
                 //set the extension filters to only .xlsx and .csv files 
                 //so only files with these extensions will be visible to the user
-                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("JSON Files (*.json)", "*.json");
+                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("XML Files (*.xml)", "*.xml");
                 fileChooser.getExtensionFilters().add(extFilter);
 
                 Stage stage = new Stage();
@@ -928,8 +928,21 @@ public class GUIPane extends Application {
     private void saveFile(ObservableList<Node> children) throws IOException {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save Current Layout");
+        
+        //setting the initial file chooser directory 
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "\\Documents"));
 
+        //set the extension filters to only .xlsx and .csv files 
+        //so only files with these extensions will be visible to the user
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("XML Files (*.xml)", "*.xml");
+        fileChooser.getExtensionFilters().add(extFilter);
+        
         File file = fileChooser.showSaveDialog(new Stage());
+        
+        //open extension filtered files
+        HostServices hostServices = getHostServices();
+        hostServices.showDocument(file.getAbsolutePath());        
+        
         if (file != null) {
             
             //Create a new values object, in order to store and write the current
@@ -956,9 +969,22 @@ public class GUIPane extends Application {
     private void loadFile(ObservableList<Node> children) throws IOException {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Load Previous Layout");
+        
+        //setting the initial file chooser directory 
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "\\Documents"));
+
+        //set the extension filters to only .xlsx and .csv files 
+        //so only files with these extensions will be visible to the user
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("XML Files (*.xml)", "*.xml");
+        fileChooser.getExtensionFilters().add(extFilter);
+        
         File file = fileChooser.showOpenDialog(new Stage());
+        
+        //open extension filtered files
+        HostServices hostServices = getHostServices();
+        hostServices.showDocument(file.getAbsolutePath());         
+        
         if (file != null) {
-            // handle properly
             
             String charsetAsString = String.valueOf(StandardCharsets.UTF_8);
             
