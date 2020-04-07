@@ -262,44 +262,40 @@ public class GUIPane extends Application {
 
         //creating About window 
         MenuItem aboutItem = new MenuItem("About...");
-        aboutItem.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent event) {
-                Stage popupAbout = new Stage();
-                //popupAbout.initModality(Modality.APPLICATION_MODAL);
-                popupAbout.initStyle(StageStyle.UTILITY);
-                popupAbout.setTitle("About the Project");
-
-                //creating a text area
-                Text aboutText = new Text();
-
-                //setting the text font 
-                aboutText.setFont(Font.font("times new roman", FontPosture.REGULAR, 15));
-
-                //setting the position of the text 
-                //aboutText.setTextAlignment(TextAlignment.CENTER);
-                //setting the About text
-                String text = "The drone telemetry software project will interpret information from a data file,"
-                        + "and the user will be able to choose from the listed fields of telemetry data to be displayed.\n\n"
-                        + "The user will select up to ten fields--eleven, including the timestamp--and"
-                        + "the corresponding statistics will be displayed.\n\n Gauges can be selected and named, based"
-                        + "on given choices, to display individual data elements.\n\n These gauges can be customized"
-                        + "with regards to the ranges (blue, green, yellow, and red), and include an alarm for data"
-                        + "entering/exceeding the red range.\n\n The user may also choose from a selection of playback"
-                        + "speeds, standard playback or reverse, arrange and resize gauges prior to playback, and"
-                        + "save gauge setup for later retrieval.";
-
-                aboutText.setText(text);
-
-                //creating a layout for the text area 
-                VBox vbox = new VBox(aboutText);
-
-                //creating the popup scene 
-                Scene popScene = new Scene(vbox, 1200, 300);
-                popupAbout.setScene(popScene);
-                popupAbout.showAndWait();
-
-            }
-
+        aboutItem.setOnAction((ActionEvent event) -> {
+            Stage popupAbout = new Stage();
+            //popupAbout.initModality(Modality.APPLICATION_MODAL);
+            popupAbout.initStyle(StageStyle.UTILITY);
+            popupAbout.setTitle("About the Project");
+            
+            //creating a text area
+            Text aboutText = new Text();
+            
+            //setting the text font
+            aboutText.setFont(Font.font("times new roman", FontPosture.REGULAR, 15));
+            
+            //setting the position of the text
+            //aboutText.setTextAlignment(TextAlignment.CENTER);
+            //setting the About text
+            String text = "The drone telemetry software project will interpret information from a data file,"
+                    + "and the user will be able to choose from the listed fields of telemetry data to be displayed.\n\n"
+                    + "The user will select up to ten fields--eleven, including the timestamp--and"
+                    + "the corresponding statistics will be displayed.\n\n Gauges can be selected and named, based"
+                    + "on given choices, to display individual data elements.\n\n These gauges can be customized"
+                    + "with regards to the ranges (blue, green, yellow, and red), and include an alarm for data"
+                    + "entering/exceeding the red range.\n\n The user may also choose from a selection of playback"
+                    + "speeds, standard playback or reverse, arrange and resize gauges prior to playback, and"
+                    + "save gauge setup for later retrieval.";
+            
+            aboutText.setText(text);
+            
+            //creating a layout for the text area
+            VBox vbox = new VBox(aboutText);
+            
+            //creating the popup scene
+            Scene popScene = new Scene(vbox, 1200, 300);
+            popupAbout.setScene(popScene);
+            popupAbout.showAndWait();
         });
 
         MenuItem helpItem = new MenuItem("Help Contents");
@@ -613,21 +609,61 @@ public class GUIPane extends Application {
         final ComboBox areaCombo = new ComboBox(dataView.getItems());
         final ComboBox singleCombo = new ComboBox(dataView.getItems());
         final ComboBox toggleCombo = new ComboBox(dataView.getItems());
-        final ComboBox xyCombo = new ComboBox(dataView.getItems());
+        final ComboBox xy1Combo = new ComboBox(dataView.getItems());
         final ComboBox timeCombo = new ComboBox(dataView.getItems());
         
         //whoo lad here we go 
         
+        speedCombo.valueProperty().addListener(new ChangeListener<String>() {
+            @Override 
+            public void changed(ObservableValue obs, String t, String t1) {
+                System.out.println(t1);
+            }
+        });  
+        
         areaCombo.valueProperty().addListener(new ChangeListener<String>() {
             @Override 
             public void changed(ObservableValue obs, String t, String t1) {
-                System.out.println(obs);
-                System.out.println(t);
                 System.out.println(t1);
             }
         });
         
-        //TODO: create action event for combo boxes
+        singleCombo.valueProperty().addListener(new ChangeListener<String>() {
+            @Override 
+            public void changed(ObservableValue obs, String t, String t1) {
+                System.out.println(t1);
+            }
+        });  
+        
+        toggleCombo.valueProperty().addListener(new ChangeListener<String>() {
+            @Override 
+            public void changed(ObservableValue obs, String t, String t1) {
+                System.out.println(t1);
+            }
+        });      
+        
+        areaCombo.valueProperty().addListener(new ChangeListener<String>() {
+            @Override 
+            public void changed(ObservableValue obs, String t, String t1) {
+                System.out.println(t1);
+            }
+        });
+        
+        xy1Combo.valueProperty().addListener(new ChangeListener<String>() {
+            @Override 
+            public void changed(ObservableValue obs, String t, String t1) {
+                System.out.println(t1);
+            }
+        });
+        
+        timeCombo.valueProperty().addListener(new ChangeListener<String>() {
+            @Override 
+            public void changed(ObservableValue obs, String t, String t1) {
+                System.out.println(t1);
+            }
+        });
+
+        
         HBox hbox1 = new HBox(); 
         HBox hbox2 = new HBox();
         
@@ -643,7 +679,7 @@ public class GUIPane extends Application {
         HBox hbox5 = new HBox();
         HBox hbox6 = new HBox();
         
-        hbox5.getChildren().addAll(xyField, xyCombo);
+        hbox5.getChildren().addAll(xyField, xy1Combo);
         hbox6.getChildren().addAll(speedField, speedCombo);
         
         VBox vbox1 = new VBox();
