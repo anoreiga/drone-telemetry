@@ -616,50 +616,50 @@ public class GUIPane extends Application {
         
         speedCombo.valueProperty().addListener(new ChangeListener<String>() {
             @Override 
-            public void changed(ObservableValue obs, String t, String t1) {
-                System.out.println(t1);
+            public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
+                System.out.println(currentSelection);
             }
         });  
         
         areaCombo.valueProperty().addListener(new ChangeListener<String>() {
             @Override 
-            public void changed(ObservableValue obs, String t, String t1) {
-                System.out.println(t1);
+            public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
+                System.out.println(currentSelection);
             }
         });
         
         singleCombo.valueProperty().addListener(new ChangeListener<String>() {
             @Override 
-            public void changed(ObservableValue obs, String t, String t1) {
-                System.out.println(t1);
+            public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
+                System.out.println(currentSelection);
             }
         });  
         
         toggleCombo.valueProperty().addListener(new ChangeListener<String>() {
             @Override 
-            public void changed(ObservableValue obs, String t, String t1) {
-                System.out.println(t1);
+            public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
+                System.out.println(currentSelection);
             }
         });      
         
         areaCombo.valueProperty().addListener(new ChangeListener<String>() {
             @Override 
-            public void changed(ObservableValue obs, String t, String t1) {
-                System.out.println(t1);
+            public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
+                System.out.println(currentSelection);
             }
         });
         
         xy1Combo.valueProperty().addListener(new ChangeListener<String>() {
             @Override 
-            public void changed(ObservableValue obs, String t, String t1) {
-                System.out.println(t1);
+            public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
+                System.out.println(currentSelection);
             }
         });
         
         timeCombo.valueProperty().addListener(new ChangeListener<String>() {
             @Override 
-            public void changed(ObservableValue obs, String t, String t1) {
-                System.out.println(t1);
+            public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
+                System.out.println(currentSelection);
             }
         });
 
