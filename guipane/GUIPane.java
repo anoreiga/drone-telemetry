@@ -551,42 +551,21 @@ public class GUIPane extends Application {
         //*******************************
         //CREATING DATA LISTS + LISTENERS
         //*******************************
-        ListView <Item> dataView = new ListView<>();
+        ListView <String> dataView = new ListView<>();
                 
         //TODO: make dynamic
-        Item battery = new Item("BATTERY ", false);
-        Item pitch = new Item("PITCH ", false);
-        Item yaw = new Item("YAW ", false);
-        Item timestamp = new Item("TIMESTAMP ", false);
+        String battery = "BATTERY";
+        String pitch = "PITCH";
+        String yaw = "YAW";
+        String timestamp = "TIMESTAMP";
                     
         dataView.getItems().addAll(timestamp, pitch, yaw, battery);        
-                
-            for (int i=0; i <= dataView.getItems().size(); i++) 
-            {      
-                battery.onProperty().addListener((obs, wasOn, isNowOn) -> {
-                    System.out.println(battery.getName() + "changed on state from "+wasOn+" to "+isNowOn);
-                });
-                
-                pitch.onProperty().addListener((obs, wasOn, isNowOn) -> {
-                    System.out.println(pitch.getName() + "changed on state from "+wasOn+" to "+isNowOn);
-                });
-                
-                yaw.onProperty().addListener((obs, wasOn, isNowOn) -> {
-                    System.out.println(yaw.getName() + "changed on state from "+wasOn+" to "+isNowOn);
-                });
-                
-                timestamp.onProperty().addListener((obs, wasOn, isNowOn) -> {
-                    System.out.println(timestamp.getName() + "changed on state from "+wasOn+" to "+isNowOn);
-                });                
-            }    
-        
-        dataView.setCellFactory(CheckBoxListCell.forListView((Item item) -> item.onProperty()));
-        
+                  
         //create new tabpane on the left
-        TabPane tabPaneLeft = new TabPane();
+        TabPane tbLeft = new TabPane();
 
         //set the tabs 
-        Tab dataTab = new Tab("Select Data Columns");
+        Tab dataTab = new Tab("View Data Columns");
         Tab gaugeTab = new Tab("Select Gauges");
 
         //fill the tabs with content from the checkbox tree view item lists
@@ -594,7 +573,7 @@ public class GUIPane extends Application {
         dataTab.setContent(dataView);
 
         //add the tab pane content to the left tab pane
-        tabPaneLeft.getTabs().addAll(gaugeTab, dataTab);
+        tbLeft.getTabs().addAll(gaugeTab, dataTab);
 
         //********************************
         //GRID PANE 
@@ -637,6 +616,16 @@ public class GUIPane extends Application {
         final ComboBox xyCombo = new ComboBox(dataView.getItems());
         final ComboBox timeCombo = new ComboBox(dataView.getItems());
         
+        //whoo lad here we go 
+        
+        areaCombo.valueProperty().addListener(new ChangeListener<String>() {
+            @Override 
+            public void changed(ObservableValue obs, String t, String t1) {
+                System.out.println(obs);
+                System.out.println(t);
+                System.out.println(t1);
+            }
+        });
         
         //TODO: create action event for combo boxes
         HBox hbox1 = new HBox(); 
@@ -911,7 +900,7 @@ public class GUIPane extends Application {
         
         //setting up the border pane
         borderPane.setTop(vbox);
-        borderPane.setLeft(tabPaneLeft);
+        borderPane.setLeft(tbLeft);
         borderPane.setCenter(gridPane);
         //borderPane.setCenter(new TextArea());
         //borderPane.setRight(tabPaneRight);
