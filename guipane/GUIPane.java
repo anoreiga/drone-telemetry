@@ -14,7 +14,6 @@ import org.apache.commons.io.*;
 //********************
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import static com.microsoft.schemas.office.excel.STTrueFalseBlank.Factory.newValue;
 //********************
 //JAVA IMPORTS
 //********************
@@ -49,22 +48,15 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBoxTreeItem;
-import javafx.scene.control.CheckBoxTreeItem.TreeModificationEvent;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextFormatter;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
-import javafx.scene.control.cell.CheckBoxTreeCell;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -76,7 +68,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Path;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.Text;
@@ -92,13 +83,8 @@ import javafx.util.converter.DoubleStringConverter;
 //MEDUSA IMPORTS
 //********************
 import eu.hansolo.medusa.*;
-import eu.hansolo.medusa.skins.DashboardSkin;
-import eu.hansolo.medusa.skins.GaugeSkin;
 import eu.hansolo.medusa.skins.HSkin;
-import eu.hansolo.medusa.skins.PlainClockSkin;
-import eu.hansolo.medusa.skins.SimpleDigitalSkin;
 import eu.hansolo.medusa.skins.SlimClockSkin;
-import eu.hansolo.medusa.skins.SlimSkin;
 import java.io.FileReader;
 import java.io.Reader;
 
@@ -109,19 +95,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import javafx.beans.value.ChangeListener;
-import javafx.collections.FXCollections;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.ToolBar;
 import javafx.scene.control.cell.CheckBoxListCell;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import utility.CSVRead;
-import utility.CollectionOfFields;
-import utility.ExcelWriter;
+import utility.CSVReader;
 
 /**
  *
@@ -140,6 +121,9 @@ public class GUIPane extends Application {
     
     //global variable for data frequency
     private Label dataFreq = new Label();
+    
+    //global variable for the file path of a data file
+    private String FILE_PATH = null; 
                        
     public static void main(String[] args) { 
 
@@ -175,61 +159,30 @@ public class GUIPane extends Application {
         Menu fileMenu = new Menu("File");
 
         //telling the New menu item to load a new excel file
-        MenuItem newItem = new MenuItem("Read New Excel File");
-        newItem.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent event) {
-                FileChooser fileChooser = new FileChooser();
+        MenuItem newCSVItem = new MenuItem("Read New CSV File");
+        FileChooser fileChooser = new FileChooser();
 
-                //set the initial inventory to Documents 
-                //TODO: is there any other directory that makes sense?
-                fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "\\Documents"));
+        //set the initial inventory to Documents 
+        //TODO: is there any other directory that makes sense?
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "\\Documents"));
 
-                //set the extension filters to only .xlsx and .csv files 
-                //so only files with these extensions will be visible to the user
-                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Excel/CSV Files (*.xlsx/*.csv)", "*.xlsx", "*.csv");
-                fileChooser.getExtensionFilters().add(extFilter);
+        //set the extension filters to only .xlsx and .csv files 
+        //so only files with these extensions will be visible to the user
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Excel/CSV Files (*.xlsx/*.csv)", "*.csv", "*.xlsx");
+        fileChooser.getExtensionFilters().add(extFilter);
 
-                Stage stage = new Stage();
+        Stage stage = new Stage();
 
-                //showing "open file" dialog
-                File file = fileChooser.showOpenDialog(stage);
+        //showing "open file" dialog
+        File file = fileChooser.showOpenDialog(stage);
+        
+        fileChooser.setTitle("Select Data File");
 
-                //open extension filtered files 
-                HostServices hostServices = getHostServices();
-                hostServices.showDocument(file.getAbsolutePath());
-
-            }
-
-        });
-
-        //telling the Open menu item to load another .JSCON file 
-        /*MenuItem openItem = new MenuItem("Open Existing File");
-        openItem.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent event) {
-                FileChooser fileChooser = new FileChooser();
-
-                //set the initial inventory to Documents 
-                //TODO: is there any other directory that makes sense?
-                fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "\\Documents"));
-
-                //set the extension filters to only .xlsx and .csv files 
-                //so only files with these extensions will be visible to the user
-                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("XML Files (*.xml)", "*.xml");
-                fileChooser.getExtensionFilters().add(extFilter);
-
-                Stage stage = new Stage();
-
-                //showing "open file" dialog
-                File file = fileChooser.showOpenDialog(stage);
-
-                //open extension filtered files 
-                HostServices hostServices = getHostServices();
-                hostServices.showDocument(file.getAbsolutePath());
-
-            }
-
-        });*/
-
+        if (file != null) {
+            FILE_PATH = file.getAbsolutePath();
+            System.out.println("Got file " + FILE_PATH);
+        }
+        
         //telling the Exit menu item to exit application
         MenuItem exitItem = new MenuItem("Exit");
         exitItem.setOnAction(e -> Platform.exit());
@@ -256,8 +209,7 @@ public class GUIPane extends Application {
             }
         });
         
-        fileMenu.getItems().addAll(newItem,
-                new SeparatorMenuItem(), saveItem, loadItem,
+        fileMenu.getItems().addAll(saveItem, loadItem,
                 new SeparatorMenuItem(), exitItem);
 
         //creating the Edit menu
@@ -346,7 +298,7 @@ public class GUIPane extends Application {
             
         ListView <Item> gaugeView = new ListView<>();
                 
-        Item toggleGauge = new Item("Toggle Gauge ", false);
+        Item toggleGauge = new Item("On/Off Gauge ", false);
         Item singleGauge = new Item("Single Character Gauge ", false);
         Item textGauge = new Item("Text Gauge ", false);
         Item barGauge = new Item("XY Plot Gauge ", false);
@@ -367,7 +319,7 @@ public class GUIPane extends Application {
                         if(!gridPane.getChildren().contains(toggleSwitch)){
                             //adding a toggle switch to the grid pane 
                             gridPane.add(toggleSwitch, 0, 0);
-                            nodes.put("toggle", toggleSwitch);    
+                            nodes.put("on/off", toggleSwitch);    
 
                             System.out.println("Adding toggle switch..." + gridPane.getChildren().contains(toggleSwitch));
                     
@@ -438,7 +390,7 @@ public class GUIPane extends Application {
                     if(isNowOn == true) {
                         if(!gridPane.getChildren().contains(tf)) {
                             gridPane.add(tf, 1, 2);
-                            nodes.put("tf", tf);                           
+                            nodes.put("char", tf);                           
                         }
                     } else {
                             gridPane.getChildren().forEach(node ->{
@@ -459,7 +411,7 @@ public class GUIPane extends Application {
                     if(isNowOn == true) {
                         if(!gridPane.getChildren().contains(ta)) {
                             gridPane.add(ta, 0, 2);
-                            nodes.put("ta", ta);                         
+                            nodes.put("text", ta);                         
                         }
                     } else {
                         gridPane.getChildren().forEach(node -> {
@@ -528,7 +480,7 @@ public class GUIPane extends Application {
                         if (!gridPane.getChildren().contains(gauge)) {
                             //adding the gauge to the grid pane 
                             gridPane.add(gauge, 2, 2);
-                            nodes.put("gauge", gauge);                          
+                            nodes.put("speedometer", gauge);                          
                         }
                     } else {
                         gridPane.getChildren().forEach(node -> {
@@ -553,17 +505,12 @@ public class GUIPane extends Application {
         //*******************************
         ListView <String> dataView = new ListView<>();
                 
-        CSVRead csv = new CSVRead();
-        csv.ReadCSV("C:\\Users\\Alexandra\\Documents\\sample.csv", dataView);
-                
-        //TODO: make dynamic
-        /*String battery = "BATTERY";
-        String pitch = "PITCH";
-        String yaw = "YAW";
-        String timestamp = "TIMESTAMP";*/
-                    
-        //dataView.getItems().addAll(timestamp, pitch, yaw, battery);        
-                  
+        CSVReader csv = new CSVReader();
+        csv.ReadCSV(FILE_PATH, dataView);
+
+        System.out.println("Reading in " + FILE_PATH);
+        
+        
         //create new tabpane on the left
         TabPane tbLeft = new TabPane();
 

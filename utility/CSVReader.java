@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package utility;
+package guipane;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,13 +18,14 @@ public class CSVReader {
         String csvFile = path;
         String line = "";
         String DELIMITER = ",";
+        
 
       try {
           
          File file = new File(csvFile);
          FileReader fr = new FileReader(file);
          BufferedReader br = new BufferedReader(fr);
-                  
+
          String[] tempArr;
          
          while((line = br.readLine()) != null) {
