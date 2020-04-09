@@ -2,7 +2,7 @@
 NOTE: THIS VERSION WILL PRINT THE EXCEL INTO ROWS INSTEAD OF COLUMNS!
         LATER PRINT IN COLUMNS
  */
-package OnlyParser;
+package utility;
 
 import java.io.File;
 import java.io.FileNotFoundException;

@@ -118,6 +118,10 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.cell.CheckBoxListCell;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import utility.CSVRead;
+import utility.CollectionOfFields;
+import utility.ExcelWriter;
 
 /**
  *
@@ -171,7 +175,7 @@ public class GUIPane extends Application {
         Menu fileMenu = new Menu("File");
 
         //telling the New menu item to load a new excel file
-        MenuItem newItem = new MenuItem("New File");
+        MenuItem newItem = new MenuItem("Read New Excel File");
         newItem.setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
                 FileChooser fileChooser = new FileChooser();
@@ -199,7 +203,7 @@ public class GUIPane extends Application {
         });
 
         //telling the Open menu item to load another .JSCON file 
-        MenuItem openItem = new MenuItem("Open Existing File");
+        /*MenuItem openItem = new MenuItem("Open Existing File");
         openItem.setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
                 FileChooser fileChooser = new FileChooser();
@@ -224,14 +228,14 @@ public class GUIPane extends Application {
 
             }
 
-        });
+        });*/
 
         //telling the Exit menu item to exit application
         MenuItem exitItem = new MenuItem("Exit");
         exitItem.setOnAction(e -> Platform.exit());
 
         //creating the save file initial functionality 
-        MenuItem saveItem = new MenuItem("Save File");
+        MenuItem saveItem = new MenuItem("Save Current Layout");
 
         saveItem.setOnAction(e -> {
             try {
@@ -242,7 +246,7 @@ public class GUIPane extends Application {
         });
         
         //creating the load file initial functionality 
-        MenuItem loadItem = new MenuItem("Load File");
+        MenuItem loadItem = new MenuItem("Load Previous Layout");
         
         loadItem.setOnAction(e -> {
             try {
@@ -252,7 +256,7 @@ public class GUIPane extends Application {
             }
         });
         
-        fileMenu.getItems().addAll(newItem, openItem,
+        fileMenu.getItems().addAll(newItem,
                 new SeparatorMenuItem(), saveItem, loadItem,
                 new SeparatorMenuItem(), exitItem);
 
@@ -549,13 +553,16 @@ public class GUIPane extends Application {
         //*******************************
         ListView <String> dataView = new ListView<>();
                 
+        CSVRead csv = new CSVRead();
+        csv.ReadCSV("C:\\Users\\Alexandra\\Documents\\sample.csv", dataView);
+                
         //TODO: make dynamic
-        String battery = "BATTERY";
+        /*String battery = "BATTERY";
         String pitch = "PITCH";
         String yaw = "YAW";
-        String timestamp = "TIMESTAMP";
+        String timestamp = "TIMESTAMP";*/
                     
-        dataView.getItems().addAll(timestamp, pitch, yaw, battery);        
+        //dataView.getItems().addAll(timestamp, pitch, yaw, battery);        
                   
         //create new tabpane on the left
         TabPane tbLeft = new TabPane();

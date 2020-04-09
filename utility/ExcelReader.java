@@ -4,7 +4,7 @@
  * For more information refer to the "ExcelReader Read Me.txt" file.
  * Heavily refer: https://www.callicoder.com/java-read-excel-file-apache-poi/
  */
-package OnlyParser;
+package utility;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
