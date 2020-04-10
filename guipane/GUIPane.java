@@ -102,7 +102,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.CheckBoxListCell;
-import guipane.CSVReader;
+import utility.CSVReader;
 
 /**
  *
@@ -472,9 +472,39 @@ public class GUIPane extends Application {
                 speedGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
                     System.out.println(speedGauge.getName() + " changed on state from "+wasOn+" to "+isNowOn);
                     
-                    //creating a new speedometer 
-                    Gauge gauge = new Gauge();
-                    gauge.setSkin(new HSkin(gauge));
+                /* Broken Compass
+                Gauge gauge = GaugeBuilder.create()  
+                 .title("Speed")  
+                 .unit("Degrees")  
+                 .mediumTickMarksVisible(false)
+                 .minorTickMarksVisible(false)
+                 .minValue(0) // Set the start value of the scale  
+                 .maxValue(360) // Set the end value of the scale  
+                 .startAngle(0) // Start angle of your scale (bottom -> 0, direction -> CCW)  
+                 .angleRange(360) // Angle range of your scale starting from the start angle  
+                 .markersVisibile(true)
+                 .markers(new Marker(0, “South”))
+                 .markers(new Marker())
+                 //.markers(new Marker(180, “North”, color.RED))
+                 //.markers(new Marker(270, “East”, color.RED))
+                 //.markers(new Marker(90, “West”, color.RED))
+                 .build();  
+                */
+                   //creating a new speedometer 
+                Gauge gauge = GaugeBuilder.create()  
+                               // .skintype(SkinType.HSkin)  
+                                .title("Speed")  
+                                .unit("MPH")  
+                                .mediumTickMarksVisible(false)
+                                .minorTickMarksVisible(false)
+                                .minValue(0) 
+                                .maxValue(100) 
+                                .startAngle(270) 
+                                .angleRange(180) 
+                                .thresholdVisible(true)
+                                .threshold(50)
+                                .thresholdColor(Color.RED)
+                                .build();  
                     
                     if(isNowOn == true) {
                         if (!gridPane.getChildren().contains(gauge)) {
