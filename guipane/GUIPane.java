@@ -102,7 +102,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.CheckBoxListCell;
-import utility.CSVReader;
+import guipane.CSVReader;
 
 /**
  *
