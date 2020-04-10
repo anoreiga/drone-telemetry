@@ -102,7 +102,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.CheckBoxListCell;
-import utility.CSVReader;
+import guipane.CSVReader;
 
 /**
  *
@@ -504,7 +504,7 @@ public class GUIPane extends Application {
                                 .thresholdVisible(true)
                                 .threshold(50)
                                 .thresholdColor(Color.RED)
-                                .build();  
+                                .build(); 
                     
                     if(isNowOn == true) {
                         if (!gridPane.getChildren().contains(gauge)) {
@@ -912,7 +912,7 @@ public class GUIPane extends Application {
         
         //add buttons to the playback menu
         //add centertext button here when fix
-        playbackMenu.getChildren().addAll(reverseButton, playButton, pauseButton, oneXButton, fiveXButton, tenXButton, timeStamp, dataButton, dataFreq);
+        playbackMenu.getChildren().addAll(playButton, pauseButton, timeStamp, dataButton, dataFreq);
 
         //************************
         //BORDER PANE SETUP 
