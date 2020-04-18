@@ -102,7 +102,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.CheckBoxListCell;
-import guipane.CSVReader;
+import utility.CSVReader;
 
 /**
  *
@@ -537,7 +537,7 @@ public class GUIPane extends Application {
                 
         CSVReader csv = new CSVReader();
         csv.ReadCSV(FILE_PATH, dataView);
-
+        
         System.out.println("Reading in " + FILE_PATH);
         
         

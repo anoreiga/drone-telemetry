@@ -3,45 +3,55 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package guipane;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import javafx.scene.control.ListView;
 
-/**
- *
- * @author Twon
- */
 public class CSVReader {
 
-    public static void main(String[] args) {
-
-        String csvFile = "C:\\Projects\\Senior-Design\\drone-telemetry\\guipane\\sample.csv";
+    public void ReadCSV(String path, ListView<String> view) {
+        
+        String csvFile = path;
         String line = "";
-        String cvsSplitBy = ",";
-
+        String DELIMITER = ",";
         
-        
-        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
 
-            while ((line = br.readLine()) != null) {
+      try {
+          
+         File file = new File(csvFile);
+         FileReader fr = new FileReader(file);
+         BufferedReader br = new BufferedReader(fr);
 
-                // use comma as separator
-                String[] data = line.split(cvsSplitBy);
-
-                for (int i = 0; data.length > i; i++){
-                    System.out.println(data[i]);
-                }
-                
-
+         String[] tempArr;
+         String[] dataArr;
+         
+         String headerRow = null;
+         
+         while((line = br.readLine()) != null) {
+            tempArr = line.split(DELIMITER);
+            for(String tempStr : tempArr) {
+                view.getItems().add(tempStr);
             }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+            break;
+            
+            }
+        
+         br.close();
+         
+         } catch(IOException ioe) {
+            ioe.printStackTrace();
+         }
+    }
+         
+    public void ParseCSV (String selection, String tempArr[]) {
+    
+        String dataArr[];
     }
 
+
 }
+    
