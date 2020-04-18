@@ -102,7 +102,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.CheckBoxListCell;
-import utility.CSVReader;
+import guipane.CSVReader;
+import java.io.FileNotFoundException;
 
 /**
  *
@@ -147,7 +148,7 @@ public class GUIPane extends Application {
 
     }
 
-    public BorderPane createBorderPane(ObservableList<Node> children) {
+    public BorderPane createBorderPane(ObservableList<Node> children) throws Exception {
 
         BorderPane borderPane = new BorderPane();
         borderPane.setId("borderpane");
@@ -158,8 +159,6 @@ public class GUIPane extends Application {
         //creating the File menu
         Menu fileMenu = new Menu("File");
 
-        //telling the New menu item to load a new excel file
-        MenuItem newCSVItem = new MenuItem("Read New CSV File");
         FileChooser fileChooser = new FileChooser();
 
         //set the initial inventory to Documents 
@@ -175,13 +174,47 @@ public class GUIPane extends Application {
 
         //showing "open file" dialog
         File file = fileChooser.showOpenDialog(stage);
-        
+                
         fileChooser.setTitle("Select Data File");
-
+        
+        
         if (file != null) {
+            
             FILE_PATH = file.getAbsolutePath();
             System.out.println("Got file " + FILE_PATH);
-        }
+            
+            System.out.println(FilenameUtils.getExtension(FILE_PATH));
+            SearchFiles searchFile = new SearchFiles(FILE_PATH, '/', '.');
+            
+            if ("xlsx".equals(FilenameUtils.getExtension(FILE_PATH))) {
+                                
+                System.out.println("Did we get here?");
+                
+                ConvertExcel exc = new ConvertExcel();
+                System.out.println("Did we get here?");
+                
+                System.out.println(FILE_PATH);
+                exc.Convert(FILE_PATH);
+                System.out.println("Did we get here?");
+                System.out.println(FILE_PATH);
+            }
+                /*                                
+                System.out.println("File name = " + searchFile.filename());
+                                
+                File newCSV = new File(searchFile.filename());
+                String newPath = newCSV.getAbsolutePath();
+                
+                System.out.println(newCSV.getAbsolutePath());
+                
+                FILE_PATH = newPath;
+                
+                System.out.println(FILE_PATH);*/
+                
+                
+            } 
+       
+        System.out.println("Reading in " + FILE_PATH);
+        
         
         //telling the Exit menu item to exit application
         MenuItem exitItem = new MenuItem("Exit");
@@ -408,6 +441,8 @@ public class GUIPane extends Application {
                     //adding text area to the grid pane
                     TextArea ta = new TextArea();  
                     
+                    ta.setFont(Font.font("times new roman", 70)); //setting the font and font size
+                    
                     if(isNowOn == true) {
                         if(!gridPane.getChildren().contains(ta)) {
                             gridPane.add(ta, 0, 2);
@@ -534,12 +569,16 @@ public class GUIPane extends Application {
         //CREATING DATA LISTS + LISTENERS
         //*******************************
         ListView <String> dataView = new ListView<>();
-                
-        CSVReader csv = new CSVReader();
-        csv.ReadCSV(FILE_PATH, dataView);
         
-        System.out.println("Reading in " + FILE_PATH);
-        
+        //if the file is CSV read it here where I can pass in the ListView
+        if ("csv".equals(FilenameUtils.getExtension(FILE_PATH))) {
+            CSVReader csv = new CSVReader();
+            csv.ReadCSV(FILE_PATH, dataView); 
+        } else {
+            System.out.println("Cannot find correct file...");
+            System.out.println("Please fix error. Program terminating...");
+        }
+
         
         //create new tabpane on the left
         TabPane tbLeft = new TabPane();
@@ -597,7 +636,6 @@ public class GUIPane extends Application {
         final ComboBox timeCombo = new ComboBox(dataView.getItems());
         
         //whoo lad here we go 
-        
         speedCombo.valueProperty().addListener(new ChangeListener<String>() {
             @Override 
             public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
@@ -609,6 +647,21 @@ public class GUIPane extends Application {
             @Override 
             public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
                 System.out.println(currentSelection);
+                CSVReader parse = new CSVReader();
+                
+                Timeline timeline = new Timeline(new KeyFrame(
+                        Duration.millis(2500),
+                        ae -> {
+                    try {
+                        parse.ParseTextAreaCSV((TextArea)(nodes.get("text")), FILE_PATH, currentSelection);
+                    } catch (IOException ex) {
+                        Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }));
+                timeline.setCycleCount(Animation.INDEFINITE);
+                timeline.play();
             }
         });
         
@@ -616,7 +669,25 @@ public class GUIPane extends Application {
             @Override 
             public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
                 System.out.println(currentSelection);
-            }
+                
+                CSVReader parse = new CSVReader();
+                
+                Timeline timeline = new Timeline(new KeyFrame(
+                        Duration.millis(2500),
+                        ae -> {
+                    try {
+                        parse.ParseSingleCharacterCSV((TextField)(nodes.get("char")), FILE_PATH, currentSelection);
+                    } catch (IOException ex) {
+                        Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }));
+                
+                timeline.setCycleCount(Animation.INDEFINITE);
+                timeline.play();
+
+            }            
         });  
         
         toggleCombo.valueProperty().addListener(new ChangeListener<String>() {
@@ -912,7 +983,7 @@ public class GUIPane extends Application {
         
         //add buttons to the playback menu
         //add centertext button here when fix
-        playbackMenu.getChildren().addAll(playButton, pauseButton, timeStamp, dataButton, dataFreq);
+        playbackMenu.getChildren().addAll(playButton, pauseButton, dataButton, dataFreq);
 
         //************************
         //BORDER PANE SETUP 
