@@ -659,16 +659,26 @@ public class GUIPane extends Application {
         });
      
                 
-       /* singleCombo.valueProperty().addListener(new ChangeListener<String>() {
+       singleCombo.valueProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
-                System.out.println(currentSelection);
+                CSVReader parse = new CSVReader();
 
+                try {
+                    parse.ParseSingleCharacterCSV((TextField) (nodes.get("char")), FILE_PATH, currentSelection);
+                } catch (IOException ex) {
+                    Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (NullPointerException ex){
+                    Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+            }
 
 
             });
 
-*/
         toggleCombo.valueProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue obs, String lastSelection, String currentSelection) {

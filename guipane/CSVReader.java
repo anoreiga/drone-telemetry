@@ -28,6 +28,12 @@ public class CSVReader {
     String[] cols = null;
     String line = "";
     
+    String lineTF = "";
+    int countTF = 0;
+    int colNumTF = 0;
+    String[] colsTF = null;
+
+    
     public void ReadCSV(String path, ListView<String> view) {
         
         String csvFile = path;
@@ -121,44 +127,70 @@ public class CSVReader {
             });
             thread.setDaemon(true);
             thread.start();
-            
         
     }
     
     public void ParseSingleCharacterCSV (TextField tf, String path, String currentSelection) throws FileNotFoundException, IOException, InterruptedException {
-        
+         
         String csvFile = path;
-        String line = "";
+        lineTF = "";
         String DELIMITER = ",";
         
         BufferedReader br = new BufferedReader(new FileReader(csvFile));
-        int count = 0;
-        int colNum = 0;
-        
-        while((line = br.readLine()) != null) {
+        countTF = 0;
+        colNumTF = 0;
             //using commas as seperators 
-            //ObservableList<String> cols = FXCollections.observableArrayList();
-            String[] cols = line.split(DELIMITER);
-            cols = line.split(DELIMITER);
-            if(count==0){
-                for(int i = 0; i < cols.length; i++){
-                    if(cols[i].equals(currentSelection)){
-                        colNum = i;
-                        //parsedCols.add(cols[colNum]);
+            lineTF = br.readLine();
+            colsTF = lineTF.split(DELIMITER); 
+            Thread thread = new Thread(new Runnable(){
+                @Override
+                public void run() {
+                    Runnable updater = new Runnable(){
+                        @Override
+                        public void run() {
+                           if(countTF==0){
+                                for(int i = 0; i < colsTF.length; i++){
+                                    if(colsTF[i].equals(currentSelection)){
+                                        System.out.println("here");
+                                        colNumTF = i;
+                                    }
+                                }
+                            }
+                            //print out the requested column  
+                            else {
+                               try {
+                                   lineTF = br.readLine();
+                               } catch (IOException ex) {
+                                   Logger.getLogger(CSVReader.class.getName()).log(Level.SEVERE, null, ex);
+                               }
+                                colsTF = lineTF.split(DELIMITER); 
+                                tf.setText(colsTF[colNumTF]);
+                                System.out.println("element: " + colsTF[colNumTF]);
+                                //Thread.sleep(500);
+                            }
+                            countTF++;
+                        }
+                    };
+                    
+                    while (lineTF != null) {
+                        try {
+                            System.out.println("count: " + countTF);
+                            Thread.sleep(100);
+                        } 
+                        catch (InterruptedException ex) {
+                        }
+
+                        // UI update is run on the Application thread
+                        Platform.runLater(updater);
                     }
+    
                 }
-            }
-            //print out the requested column  
-            else {
-                //ta.deleteText(0, ta.getText().length()-1);
-                //ta.insertText(0, cols[colNum]);
-                tf.setText(cols[colNum]);
-                                
-                System.out.println(cols[colNum]);
-            }
-            count++;
-        }
-    }   
+                
+                
+            });
+            thread.setDaemon(true);
+            thread.start();
+    }
 }
     
     
