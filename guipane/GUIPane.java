@@ -103,10 +103,6 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.CheckBoxListCell;
 import guipane.CSVReader;
-import java.io.FileNotFoundException;
-import java.util.Timer;
-import java.util.TimerTask;
-import javafx.concurrent.Task;
 
 /**
  *
@@ -114,7 +110,7 @@ import javafx.concurrent.Task;
  * @author Brendan
  */
 public class GUIPane extends Application {
-
+    
     //This HashMap is used to map the nodes in the GridPane to ids, 
     //so that they can be identified later and their locations within
     //the GridPane written to a file
@@ -122,14 +118,14 @@ public class GUIPane extends Application {
     //This global variable will allow the GridPane to be accessed outside 
     //of the createBorderPane method
     private GridPane gridPane = null;
-
+    
     //global variable for data frequency
     private Label dataFreq = new Label();
-
+    
     //global variable for the file path of a data file
-    private String FILE_PATH = null;
-        
-    public static void main(String[] args) {
+    private String FILE_PATH = null; 
+                       
+    public static void main(String[] args) { 
 
         Application.launch(args);
     }
@@ -138,19 +134,20 @@ public class GUIPane extends Application {
     public void start(Stage primaryStage) throws Exception {
 
         BorderPane borderPane = new BorderPane();
-        
+
+        ToggleSwitch button = new ToggleSwitch();
         
         Scene scene = new Scene(createBorderPane(borderPane.getChildren()), 1000, 1000);
-        //scene.getStylesheets().add("/guipane/css/styles.css");
+        scene.getStylesheets().add("/guipane/css/styles.css");
 
-        primaryStage.setTitle("Drone Telemetry Project");
+        primaryStage.setTitle("Gauge/Data Column Selection");
 
         primaryStage.setScene(scene);
         primaryStage.show();
 
     }
 
-    public BorderPane createBorderPane(ObservableList<Node> children) throws Exception {
+    public BorderPane createBorderPane(ObservableList<Node> children) {
 
         BorderPane borderPane = new BorderPane();
         borderPane.setId("borderpane");
@@ -161,6 +158,8 @@ public class GUIPane extends Application {
         //creating the File menu
         Menu fileMenu = new Menu("File");
 
+        //telling the New menu item to load a new excel file
+        MenuItem newCSVItem = new MenuItem("Read New CSV File");
         FileChooser fileChooser = new FileChooser();
 
         //set the initial inventory to Documents 
@@ -176,45 +175,14 @@ public class GUIPane extends Application {
 
         //showing "open file" dialog
         File file = fileChooser.showOpenDialog(stage);
-
+        
         fileChooser.setTitle("Select Data File");
 
         if (file != null) {
-
             FILE_PATH = file.getAbsolutePath();
             System.out.println("Got file " + FILE_PATH);
-
-            System.out.println(FilenameUtils.getExtension(FILE_PATH));
-            SearchFiles searchFile = new SearchFiles(FILE_PATH, '/', '.');
-
-            if ("xlsx".equals(FilenameUtils.getExtension(FILE_PATH))) {
-
-                System.out.println("Did we get here?");
-
-                ConvertExcel exc = new ConvertExcel();
-                System.out.println("Did we get here?");
-
-                System.out.println(FILE_PATH);
-                exc.Convert(FILE_PATH);
-                System.out.println("Did we get here?");
-                System.out.println(FILE_PATH);
-            }
-            /*                                
-                System.out.println("File name = " + searchFile.filename());
-                                
-                File newCSV = new File(searchFile.filename());
-                String newPath = newCSV.getAbsolutePath();
-                
-                System.out.println(newCSV.getAbsolutePath());
-                
-                FILE_PATH = newPath;
-                
-                System.out.println(FILE_PATH);*/
-
         }
-
-        System.out.println("Reading in " + FILE_PATH);
-
+        
         //telling the Exit menu item to exit application
         MenuItem exitItem = new MenuItem("Exit");
         exitItem.setOnAction(e -> Platform.exit());
@@ -229,10 +197,10 @@ public class GUIPane extends Application {
                 Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
-
+        
         //creating the load file initial functionality 
         MenuItem loadItem = new MenuItem("Load Previous Layout");
-
+        
         loadItem.setOnAction(e -> {
             try {
                 loadFile(children);
@@ -240,7 +208,7 @@ public class GUIPane extends Application {
                 Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
-
+        
         fileMenu.getItems().addAll(saveItem, loadItem,
                 new SeparatorMenuItem(), exitItem);
 
@@ -255,13 +223,13 @@ public class GUIPane extends Application {
             //popupAbout.initModality(Modality.APPLICATION_MODAL);
             popupAbout.initStyle(StageStyle.UTILITY);
             popupAbout.setTitle("About the Project");
-
+            
             //creating a text area
             Text aboutText = new Text();
-
+            
             //setting the text font
             aboutText.setFont(Font.font("times new roman", FontPosture.REGULAR, 15));
-
+            
             //setting the position of the text
             //aboutText.setTextAlignment(TextAlignment.CENTER);
             //setting the About text
@@ -274,12 +242,12 @@ public class GUIPane extends Application {
                     + "entering/exceeding the red range.\n\n The user may also choose from a selection of playback"
                     + "speeds, standard playback or reverse, arrange and resize gauges prior to playback, and"
                     + "save gauge setup for later retrieval.";
-
+            
             aboutText.setText(text);
-
+            
             //creating a layout for the text area
             VBox vbox = new VBox(aboutText);
-
+            
             //creating the popup scene
             Scene popScene = new Scene(vbox, 1200, 300);
             popupAbout.setScene(popScene);
@@ -292,19 +260,19 @@ public class GUIPane extends Application {
             //popupAbout.initStyle(StageStyle.UTILITY);
             popupHelp.initModality(Modality.APPLICATION_MODAL);
             popupHelp.setTitle("Help Contents");
-
+            
             //creating a help menu
             Menu infoMenu = new Menu("Info");
             //infoMenu.getItems().addAll(new MenuItem("Creating a Gauge", new MenuItem());
-
+            
             //creating a menu bar
             MenuBar infoBar = new MenuBar();
             infoBar.getMenus().addAll(infoMenu);
-
+            
             //adding the menu bar to the popup window
             //creating a layout for the text area
             VBox vbox = new VBox(infoBar);
-
+            
             //creating the popup scene
             Scene helpScene = new Scene(vbox, 500, 500);
             popupHelp.setScene(helpScene);
@@ -323,259 +291,238 @@ public class GUIPane extends Application {
 
         //add toolbar here if wanted
         vbox.getChildren().addAll(menuBar);
-
+        
         //*******************************
         //CREATING GAUGE LISTS + LISTENERS
         //*******************************
-        ListView<Item> gaugeView = new ListView<>();
-
+            
+        ListView <Item> gaugeView = new ListView<>();
+                
         Item toggleGauge = new Item("On/Off Gauge ", false);
         Item singleGauge = new Item("Single Character Gauge ", false);
         Item textGauge = new Item("Text Gauge ", false);
         Item barGauge = new Item("XY Plot Gauge ", false);
         Item speedGauge = new Item("Speedometer Gauge ", false);
-        Item timeGauge = new Item("Timestamp Gauge ", false);
+        Item timeGauge = new Item("Timestamp Gauge ", false);            
+        
+        gaugeView.getItems().addAll(toggleGauge, singleGauge, textGauge, barGauge, speedGauge, timeGauge);        
+                
+            for (Item item : gaugeView.getItems()) 
+            {    
+                //observe item's on property and display message when true 
+                toggleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(toggleGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
 
-        gaugeView.getItems().addAll(toggleGauge, singleGauge, textGauge, barGauge, speedGauge, timeGauge);
+                    ToggleSwitch toggleSwitch = new ToggleSwitch();
+                    
+                    if(isNowOn == true) {
+                        if(!gridPane.getChildren().contains(toggleSwitch)){
+                            //adding a toggle switch to the grid pane 
+                            gridPane.add(toggleSwitch, 0, 0);
+                            nodes.put("on/off", toggleSwitch);    
 
-        for (Item item : gaugeView.getItems()) {
-            //observe item's on property and display message when true 
-            toggleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
-                System.out.println(toggleGauge.getName() + "changed on state from " + wasOn + " to " + isNowOn);
-
-                ToggleSwitch toggleSwitch = new ToggleSwitch();
-
-                if (isNowOn == true) {
-                    if (!gridPane.getChildren().contains(toggleSwitch)) {
-                        //adding a toggle switch to the grid pane 
-                        gridPane.add(toggleSwitch, 0, 0);
-                        nodes.put("on/off", toggleSwitch);
-
-                        System.out.println("Adding toggle switch..." + gridPane.getChildren().contains(toggleSwitch));
-
+                            System.out.println("Adding toggle switch..." + gridPane.getChildren().contains(toggleSwitch));
+                    
                     }
-                } else {
-
-                    gridPane.getChildren().forEach(node -> {
-                        if (node instanceof ToggleSwitch) {
-                            gridPane.getChildren().remove(node);
-                        }
-                    });
-
-                }
-
-            });
-
-            //observe item's on property and display message when true 
-            timeGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
-                System.out.println(timeGauge.getName() + "changed on state from " + wasOn + " to " + isNowOn);
-                //adding a toggle switch to the grid pane 
-
-                Clock timestamp = new Clock();
-                timestamp.setSkin(new SlimClockSkin(timestamp));
-
-                if (isNowOn == true) {
-                    if (!gridPane.getChildren().contains(timestamp)) {
-                        gridPane.add(timestamp, 1, 0);
-                        nodes.put("timestamp", timestamp);
-
-                        System.out.println("Adding timestamp..." + gridPane.getChildren().contains(timestamp));
-
-                    }
-
-                } else {
-                    gridPane.getChildren().forEach(node -> {
-                        if (node instanceof Clock) {
-                            gridPane.getChildren().remove(node);
-                        }
-
-                    });
-                }
-
-            });
-
-            singleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
-                System.out.println(singleGauge.getName() + "changed on state from " + wasOn + " to " + isNowOn);
-
-                //adding a single character display to the grid pane
-                TextField tf = new TextField();
-                PseudoClass centered = PseudoClass.getPseudoClass("centered");
-
-                Pattern validDoubleText = Pattern.compile("-?((\\d*)|(\\d+\\.\\d*))");
-
-                TextFormatter<Double> textFormatter = new TextFormatter<>(new DoubleStringConverter(), 0.0,
-                        change -> {
-                            String newText = change.getControlNewText();
-                            if (validDoubleText.matcher(newText).matches()) {
-                                return change;
-                            } else {
-                                return null;
+                    } else {
+                        
+                        gridPane.getChildren().forEach(node -> {
+                            if(node instanceof ToggleSwitch) {
+                                gridPane.getChildren().remove(node);
                             }
                         });
+                        
+                    }                       
+                    
+                });
+                
+                //observe item's on property and display message when true 
+                timeGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(timeGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    //adding a toggle switch to the grid pane 
+                    
+                    Clock timestamp = new Clock();
+                    timestamp.setSkin(new SlimClockSkin(timestamp));
+                     
+                    if(isNowOn == true) {
+                        if(!gridPane.getChildren().contains(timestamp)){
+                            gridPane.add(timestamp, 1, 0);
+                            nodes.put("timestamp", timestamp);
 
-                tf.setTextFormatter(textFormatter);
+                            System.out.println("Adding timestamp..." + gridPane.getChildren().contains(timestamp));
 
-                tf.setFont(Font.font("times new roman", 70)); //setting the font and font size
-
-                if (isNowOn == true) {
-                    if (!gridPane.getChildren().contains(tf)) {
-                        gridPane.add(tf, 1, 2);
-                        nodes.put("char", tf);
-                    }
-                } else {
-                    gridPane.getChildren().forEach(node -> {
-                        if (node instanceof TextField) {
-                            gridPane.getChildren().remove(node);
                         }
+                        
+                    } else {
+                            gridPane.getChildren().forEach(node ->{
+                                if(node instanceof Clock){
+                                    gridPane.getChildren().remove(node);
+                                }
+                            
+                            });
+                    }                   
+                    
+                });    
 
-                    });
-                }
-            });
+                singleGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(singleGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //adding a single character display to the grid pane
+                    TextField tf = new TextField();
+                    PseudoClass centered = PseudoClass.getPseudoClass("centered");
 
-            textGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
-                System.out.println(textGauge.getName() + "changed on state from " + wasOn + " to " + isNowOn);
+                    Pattern validDoubleText = Pattern.compile("-?((\\d*)|(\\d+\\.\\d*))");
 
-                //adding text area to the grid pane
-                TextArea ta = new TextArea();
+                    TextFormatter<Double> textFormatter = new TextFormatter<>(new DoubleStringConverter(), 0.0,
+                            change -> {
+                                String newText = change.getControlNewText();
+                                if (validDoubleText.matcher(newText).matches()) {
+                                    return change;
+                                } else {
+                                    return null;
+                                }
+                            });
 
-                ta.setFont(Font.font("times new roman", 70)); //setting the font and font size
+                    tf.setTextFormatter(textFormatter);
 
-                if (isNowOn == true) {
-                    if (!gridPane.getChildren().contains(ta)) {
-                        gridPane.add(ta, 0, 2);
-                        nodes.put("text", ta);
-                    }
-                } else {
-                    gridPane.getChildren().forEach(node -> {
-                        if (node instanceof TextArea) {
-                            gridPane.getChildren().remove(node);
+                    tf.setFont(Font.font("times new roman", 70)); //setting the font and font size
+                    
+                    if(isNowOn == true) {
+                        if(!gridPane.getChildren().contains(tf)) {
+                            gridPane.add(tf, 1, 2);
+                            nodes.put("char", tf);                           
                         }
-                    });
-                }
+                    } else {
+                            gridPane.getChildren().forEach(node ->{
+                                if(node instanceof TextField){
+                                    gridPane.getChildren().remove(node);
+                                }
+                            
+                            });                    
+                    }                   
+                });
 
-            });
+                textGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(textGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //adding text area to the grid pane
+                    TextArea ta = new TextArea();  
+                    
+                    if(isNowOn == true) {
+                        if(!gridPane.getChildren().contains(ta)) {
+                            gridPane.add(ta, 0, 2);
+                            nodes.put("text", ta);                         
+                        }
+                    } else {
+                        gridPane.getChildren().forEach(node -> {
+                            if(node instanceof TextArea) {
+                                gridPane.getChildren().remove(node);
+                            }
+                        });
+                    }
+                    
+                });
 
-            barGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
-                System.out.println(barGauge.getName() + "changed on state from " + wasOn + " to " + isNowOn);
+                barGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(barGauge.getName() + "changed on state from "+wasOn+" to "+isNowOn);
+                    
+                    //adding a line chart display to the grid pane 
+                    //defining the x axis
+                    NumberAxis lineX = new NumberAxis(1960, 2020, 10);
+                    lineX.setLabel("Years");
 
-                //adding a line chart display to the grid pane 
-                //defining the x axis
-                NumberAxis lineX = new NumberAxis(1960, 2020, 10);
-                lineX.setLabel("Years");
+                    //defining the y axis 
+                    NumberAxis lineY = new NumberAxis(0, 350, 50);
+                    lineY.setLabel("No. of schools");
 
-                //defining the y axis 
-                NumberAxis lineY = new NumberAxis(0, 350, 50);
-                lineY.setLabel("No. of schools");
+                    //creating the line chart 
+                    LineChart linePlot = new LineChart(lineX, lineY);
 
-                //creating the line chart 
-                LineChart linePlot = new LineChart(lineX, lineY);
+                    //setting the chart data 
+                    //TODO: make dynamic 
+                    XYChart.Series series = new XYChart.Series();
+                    series.setName("No of schools in a year");
 
-                //setting the chart data 
-                //TODO: make dynamic 
-                XYChart.Series series = new XYChart.Series();
-                series.setName("No of schools in a year");
+                    series.getData().add(new XYChart.Data(1970, 15));
+                    series.getData().add(new XYChart.Data(1980, 30));
+                    series.getData().add(new XYChart.Data(1990, 60));
+                    series.getData().add(new XYChart.Data(2000, 120));
+                    series.getData().add(new XYChart.Data(2013, 240));
+                    series.getData().add(new XYChart.Data(2014, 300));
 
-                series.getData().add(new XYChart.Data(1970, 15));
-                series.getData().add(new XYChart.Data(1980, 30));
-                series.getData().add(new XYChart.Data(1990, 60));
-                series.getData().add(new XYChart.Data(2000, 120));
-                series.getData().add(new XYChart.Data(2013, 240));
-                series.getData().add(new XYChart.Data(2014, 300));
+                    //setting the data to line chart 
+                    linePlot.getData().add(series);
 
-                //setting the data to line chart 
-                linePlot.getData().add(series);
-
-                if (isNowOn == true) {
-                    if (!gridPane.getChildren().contains(linePlot)) {
+                    if(isNowOn == true) {
+                      if (!gridPane.getChildren().contains(linePlot)) {
                         //adding the chart to grid pane 
                         gridPane.add(linePlot, 2, 0);
-                        nodes.put("line", linePlot);
+                        nodes.put("line", linePlot);                     
+                      }  
+                    } else {
+                            gridPane.getChildren().forEach(node ->{
+                                if(node instanceof LineChart){
+                                    gridPane.getChildren().remove(node);
+                                }
+                            
+                            });                    
                     }
-                } else {
-                    gridPane.getChildren().forEach(node -> {
-                        if (node instanceof LineChart) {
-                            gridPane.getChildren().remove(node);
-                        }
+                });  
 
-                    });
-                }
-            });
-
-            speedGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
-                System.out.println(speedGauge.getName() + " changed on state from " + wasOn + " to " + isNowOn);
-
-                /* Broken Compass
-                Gauge gauge = GaugeBuilder.create()  
-                 .title("Speed")  
-                 .unit("Degrees")  
-                 .mediumTickMarksVisible(false)
-                 .minorTickMarksVisible(false)
-                 .minValue(0) // Set the start value of the scale  
-                 .maxValue(360) // Set the end value of the scale  
-                 .startAngle(0) // Start angle of your scale (bottom -> 0, direction -> CCW)  
-                 .angleRange(360) // Angle range of your scale starting from the start angle  
-                 .markersVisibile(true)
-                 .markers(new Marker(0, “South”))
-                 .markers(new Marker())
-                 //.markers(new Marker(180, “North”, color.RED))
-                 //.markers(new Marker(270, “East”, color.RED))
-                 //.markers(new Marker(90, “West”, color.RED))
-                 .build();  
-                 */
+                speedGauge.onProperty().addListener((obs, wasOn, isNowOn) -> {
+                    System.out.println(speedGauge.getName() + " changed on state from "+wasOn+" to "+isNowOn);
+                    
                 //creating a new speedometer 
-                Gauge gauge = GaugeBuilder.create()
-                        // .skintype(SkinType.HSkin)  
-                        .title("Speed")
-                        .unit("MPH")
-                        .mediumTickMarksVisible(false)
-                        .minorTickMarksVisible(false)
-                        .minValue(0)
-                        .maxValue(100)
-                        .startAngle(270)
-                        .angleRange(180)
-                        .thresholdVisible(true)
-                        .threshold(50)
-                        .thresholdColor(Color.RED)
-                        .build();
-
-                if (isNowOn == true) {
-                    if (!gridPane.getChildren().contains(gauge)) {
-                        //adding the gauge to the grid pane 
-                        gridPane.add(gauge, 2, 2);
-                        nodes.put("speedometer", gauge);
-                    }
-                } else {
-                    gridPane.getChildren().forEach(node -> {
-                        if (node instanceof Gauge) {
-                            gridPane.getChildren().remove(node);
+                Gauge gauge = GaugeBuilder.create()  
+                               // .skintype(SkinType.HSkin)  
+                                .title("Speed")  
+                                .unit("M/S")  
+                                .mediumTickMarksVisible(false)
+                                .minorTickMarksVisible(false)
+                                .minValue(0) 
+                                .maxValue(40) 
+                                .startAngle(270) 
+                                .angleRange(180) 
+                                .thresholdVisible(true)
+                                .threshold(30)
+                                .thresholdColor(Color.RED)
+                                .build(); 
+                    
+                    if(isNowOn == true) {
+                        if (!gridPane.getChildren().contains(gauge)) {
+                            //adding the gauge to the grid pane 
+                            gridPane.add(gauge, 2, 2);
+                            nodes.put("speedometer", gauge);                          
                         }
-                    });
-                }
-
-            });
-        }
-
-        gaugeView.setCellFactory(CheckBoxListCell.forListView(new Callback<Item, ObservableValue<Boolean>>() {
-            @Override
-            public ObservableValue<Boolean> call(Item item) {
-                return item.onProperty();
+                    } else {
+                        gridPane.getChildren().forEach(node -> {
+                            if(node instanceof Gauge) {
+                                gridPane.getChildren().remove(node);
+                            }
+                        });
+                    }
+              
+                });            
             }
-        }));
-
+        
+        gaugeView.setCellFactory(CheckBoxListCell.forListView(new Callback<Item, ObservableValue<Boolean>>() {
+            @Override 
+            public ObservableValue<Boolean> call(Item item) {
+                    return item.onProperty();
+        }
+                }));
+            
         //*******************************
         //CREATING DATA LISTS + LISTENERS
         //*******************************
-        ListView<String> dataView = new ListView<>();
+        ListView <String> dataView = new ListView<>();
+                
+        //CSVReader csv = new CSVReader();
+        csv.ReadCSV(FILE_PATH, dataView);
 
-        //if the file is CSV read it here where I can pass in the ListView
-        if ("csv".equals(FilenameUtils.getExtension(FILE_PATH))) {
-            CSVReader csv = new CSVReader();
-            csv.ReadCSV(FILE_PATH, dataView);
-        } else {
-            System.out.println("Cannot find correct file...");
-            System.out.println("Please fix error. Program terminating...");
-        }
-
+        System.out.println("Reading in " + FILE_PATH);
+        
+        
         //create new tabpane on the left
         TabPane tbLeft = new TabPane();
 
@@ -595,7 +542,7 @@ public class GUIPane extends Application {
         //********************************
         //Let's try and create a grid pane for the center
         gridPane = new GridPane();
-
+        
         gridPane.setLayoutX(100);
         gridPane.setLayoutY(100);
 
@@ -614,7 +561,7 @@ public class GUIPane extends Application {
 
         gridPane.getColumnConstraints().addAll(column1width, column2width, column3width);
         gridPane.getRowConstraints().addAll(row1Height, row2Height, row3Height);
-
+                
         //add text fields to hboxes 
         TextField speedField = new TextField("Speedometer Gauge");
         TextField areaField = new TextField("TextArea Gauge");
@@ -622,7 +569,7 @@ public class GUIPane extends Application {
         TextField toggleField = new TextField("On/Off Switch Gauge");
         TextField xyField = new TextField("XY Plot Gauge");
         TextField timeField = new TextField("Timestamp Gauge");
-
+        
         //adding comboboxes to hboxes
         final ComboBox speedCombo = new ComboBox(dataView.getItems());
         final ComboBox areaCombo = new ComboBox(dataView.getItems());
@@ -630,118 +577,95 @@ public class GUIPane extends Application {
         final ComboBox toggleCombo = new ComboBox(dataView.getItems());
         final ComboBox xy1Combo = new ComboBox(dataView.getItems());
         final ComboBox timeCombo = new ComboBox(dataView.getItems());
-
+        
         //whoo lad here we go 
+        
         speedCombo.valueProperty().addListener(new ChangeListener<String>() {
-            @Override
+            @Override 
             public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
                 System.out.println(currentSelection);
             }
-        });
-
+        });  
+        
         areaCombo.valueProperty().addListener(new ChangeListener<String>() {
-            @Override
+            @Override 
             public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
                 System.out.println(currentSelection);
-                CSVReader parse = new CSVReader();
-
-                try {
-                    parse.ParseTextAreaCSV((TextArea) (nodes.get("text")), FILE_PATH, currentSelection);
-                } catch (IOException ex) {
-                    Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (NullPointerException ex){
-                    Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
             }
         });
-     
-                
-       singleCombo.valueProperty().addListener(new ChangeListener<String>() {
-            @Override
+        
+        singleCombo.valueProperty().addListener(new ChangeListener<String>() {
+            @Override 
             public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
-                CSVReader parse = new CSVReader();
-
-                try {
-                    parse.ParseSingleCharacterCSV((TextField) (nodes.get("char")), FILE_PATH, currentSelection);
-                } catch (IOException ex) {
-                    Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (NullPointerException ex){
-                    Logger.getLogger(GUIPane.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
+                System.out.println(currentSelection);
             }
-
-
-            });
-
+        });  
+        
         toggleCombo.valueProperty().addListener(new ChangeListener<String>() {
-            @Override
+            @Override 
             public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
                 System.out.println(currentSelection);
             }
-        });
-
+        });      
+        
         areaCombo.valueProperty().addListener(new ChangeListener<String>() {
-            @Override
+            @Override 
             public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
                 System.out.println(currentSelection);
             }
         });
-
+        
         xy1Combo.valueProperty().addListener(new ChangeListener<String>() {
-            @Override
+            @Override 
             public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
                 System.out.println(currentSelection);
             }
         });
-
+        
         timeCombo.valueProperty().addListener(new ChangeListener<String>() {
-            @Override
+            @Override 
             public void changed(ObservableValue obs, String lastSelection, String currentSelection) {
                 System.out.println(currentSelection);
             }
         });
 
-        HBox hbox1 = new HBox();
+        
+        HBox hbox1 = new HBox(); 
         HBox hbox2 = new HBox();
-
+        
         hbox1.getChildren().addAll(toggleField, toggleCombo);
         hbox2.getChildren().addAll(areaField, areaCombo);
-
-        HBox hbox3 = new HBox();
+        
+        HBox hbox3 = new HBox(); 
         HBox hbox4 = new HBox();
-
+        
         hbox3.getChildren().addAll(timeField, timeCombo);
         hbox4.getChildren().addAll(singleField, singleCombo);
-
+        
         HBox hbox5 = new HBox();
         HBox hbox6 = new HBox();
-
+        
         hbox5.getChildren().addAll(xyField, xy1Combo);
         hbox6.getChildren().addAll(speedField, speedCombo);
-
+        
         VBox vbox1 = new VBox();
         vbox1.setSpacing(220);
         vbox1.getChildren().addAll(hbox1, hbox2);
-
-        VBox vbox2 = new VBox();
+        
+        VBox vbox2 = new VBox(); 
         vbox2.setSpacing(220);
         vbox2.getChildren().addAll(hbox3, hbox4);
-
+        
         VBox vbox3 = new VBox();
         vbox3.setSpacing(220);
         vbox3.getChildren().addAll(hbox5, hbox6);
-
-        gridPane.add(vbox1, 0, 1);
+        
+        gridPane.add(vbox1, 0, 1);  
         gridPane.add(vbox2, 1, 1);
         gridPane.add(vbox3, 2, 1);
-
+        
         //ToggleButton centerText = new ToggleButton("Center All Text");
+
         //*****************************************
         //PLAYBACK BUTTONS 
         //TODO: place into seperate function 
@@ -882,52 +806,53 @@ public class GUIPane extends Application {
         );
         timeline.setCycleCount(Animation.INDEFINITE);
         timeline.play();
-
+ 
         //************************
         //DATA FREQUENCY 
         //************************        
+
         //create data frequency button 
         Button dataButton = new Button("Set Data Frequency");
-
+        
         //open a new window when the toggle button is pressed
         dataButton.setOnAction((ActionEvent event) -> {
             Label dataLabel = new Label("Select data frequency:");
-
+            
             HBox dataMenu = new HBox();
-
+            
             dataMenu.setAlignment(Pos.CENTER);
             dataMenu.alignmentProperty().isBound();
             dataMenu.setSpacing(5);
-
+            
             final ToggleGroup group = new ToggleGroup();
-
+            
             RadioButton data1 = new RadioButton("1");
             data1.setToggleGroup(group);
             data1.setSelected(true);
             data1.requestFocus();
-
+            
             RadioButton data2 = new RadioButton("1.5");
             data2.setToggleGroup(group);
-            data2.setSelected(true);
+            data2.setSelected(true);            
             data2.requestFocus();
-
+            
             RadioButton data3 = new RadioButton("2");
             data3.setToggleGroup(group);
-            data3.setSelected(true);
+            data3.setSelected(true);            
             data3.requestFocus();
-
+            
             RadioButton data4 = new RadioButton("-1");
             data4.setToggleGroup(group);
-            data4.setSelected(true);
+            data4.setSelected(true);            
             data4.requestFocus();
-
+                                    
             Label labelInfo = new Label();
             labelInfo.setTextFill(Color.BLUE);
-
+            
             dataFreq.setTextFill(Color.WHITE);
             dataFreq.setFont(new Font(15));
             dataFreq.getBorder();
-
+            
             group.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
                 @Override
                 public void changed(ObservableValue<? extends Toggle> ov, Toggle old_toggle, Toggle new_toggle) {
@@ -937,40 +862,44 @@ public class GUIPane extends Application {
                         System.out.println("Button: " + button.getText());
                         labelInfo.setText("Your new data frequency is: " + button.getText() + " update(s) per second");
                         dataFreq.setText("Current Data Frequency: " + button.getText() + " update(s) per second");
-
+                        
+                        
                     }
                 }
             });
-
+            
             dataMenu.getChildren().addAll(data4, data1, data2, data3);
-
+            
             VBox secondaryLayout = new VBox();
             secondaryLayout.setSpacing(10);
             secondaryLayout.getChildren().addAll(dataLabel, dataMenu, labelInfo);
-
+            
             Scene secondScene = new Scene(secondaryLayout, 330, 150);
-
+            
             //new window
             Stage newWindow = new Stage();
             newWindow.setTitle("Data Frequency");
             newWindow.setScene(secondScene);
-
+            
             //specify modality for the new window
             newWindow.initModality(Modality.WINDOW_MODAL);
-
+            
             newWindow.show();
         });
-
+                
         //display the current time property
         //TODO: add time listener to timestamp cell in spreadsheet
         //TODO: add updateValues() method 
+        
+        
         //add buttons to the playback menu
         //add centertext button here when fix
-        playbackMenu.getChildren().addAll(playButton, pauseButton, dataButton, dataFreq);
+        playbackMenu.getChildren().addAll(playButton, pauseButton, timeStamp, dataButton, dataFreq);
 
         //************************
         //BORDER PANE SETUP 
         //************************
+        
         //setting up the border pane
         borderPane.setTop(vbox);
         borderPane.setLeft(tbLeft);
@@ -982,13 +911,15 @@ public class GUIPane extends Application {
         return borderPane;
     }
 
+
     //************************
     //SAVING FUNCTION 
     //************************
+    
     private void saveFile(ObservableList<Node> children) throws IOException {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save Current Layout");
-
+        
         //setting the initial file chooser directory 
         fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "\\Documents"));
 
@@ -996,21 +927,21 @@ public class GUIPane extends Application {
         //so only files with these extensions will be visible to the user
         FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("XML Files (*.xml)", "*.xml");
         fileChooser.getExtensionFilters().add(extFilter);
-
+        
         File file = fileChooser.showSaveDialog(new Stage());
-
+        
         //open extension filtered files
         HostServices hostServices = getHostServices();
-        hostServices.showDocument(file.getAbsolutePath());
-
+        hostServices.showDocument(file.getAbsolutePath());        
+        
         if (file != null) {
-
+            
             //Create a new values object, in order to store and write the current
             //state of the GridPane's cells to a file
             Values values = new Values(gridPane);
-
+            
             String charsetAsString = String.valueOf(StandardCharsets.UTF_8);
-
+            
             //Write the array of node ids to a file using Gson
             try {
                 Gson gson = new Gson();
@@ -1021,14 +952,15 @@ public class GUIPane extends Application {
             }
         }
     }
-
+    
     //************************
     //LOADING FUNCTION 
     //************************       
+    
     private void loadFile(ObservableList<Node> children) throws IOException {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Load Previous Layout");
-
+        
         //setting the initial file chooser directory 
         fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "\\Documents"));
 
@@ -1036,43 +968,43 @@ public class GUIPane extends Application {
         //so only files with these extensions will be visible to the user
         FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("XML Files (*.xml)", "*.xml");
         fileChooser.getExtensionFilters().add(extFilter);
-
+        
         File file = fileChooser.showOpenDialog(new Stage());
-
+        
         //open extension filtered files
         HostServices hostServices = getHostServices();
-        hostServices.showDocument(file.getAbsolutePath());
-
+        hostServices.showDocument(file.getAbsolutePath());         
+        
         if (file != null) {
-
+            
             String charsetAsString = String.valueOf(StandardCharsets.UTF_8);
-
+            
             //Use Gson to read file into a string array
             Gson gson = new Gson();
-            java.lang.reflect.Type type = new TypeToken<String[]>() {
-            }.getType();
+            java.lang.reflect.Type type = new TypeToken<String[]>(){}.getType();
             String[] arr = null;
-            try (Reader input = new FileReader(file)) {
+            try(Reader input = new FileReader(file)){
                 arr = (String[]) gson.fromJson(input, String[].class);
             }
-
+            
             //Clear the gridpane
             Iterator mapIter = nodes.entrySet().iterator();
-            while (mapIter.hasNext()) {
+            while(mapIter.hasNext()){
                 Map.Entry i = (Map.Entry) mapIter.next();
                 gridPane.getChildren().remove(i.getValue());
             }
-
+            
             //Put the nodes into their appropriate positions within the GridPane
             //based on the locations of their ids within the array
-            for (int i = 0; i < arr.length; i++) {
-                if (arr[i] != null) {
-                    int x = (i + 1) / 3;
-                    int y = (i + 1) % 3;
-                    if (y == 0) {
-                        gridPane.add((Node) nodes.get(arr[i]), x - 1, 2);
-                    } else {
-                        gridPane.add((Node) nodes.get(arr[i]), x, y - 1);
+            for(int i = 0; i < arr.length; i++){
+                if(arr[i] != null){
+                    int x = (i+1)/3;
+                    int y = (i+1)%3;
+                    if(y == 0){
+                        gridPane.add((Node) nodes.get(arr[i]), x-1, 2);
+                    }
+                    else{
+                        gridPane.add((Node) nodes.get(arr[i]), x, y-1);
                     }
                 }
             }
@@ -1080,23 +1012,23 @@ public class GUIPane extends Application {
     }
 
     private class Values {
-
+        
         String[] locations = new String[9];
-
-        public Values(GridPane pane) {
+        
+        public Values(GridPane pane){
             //Get the current location of each node in the gridpane, and store its
             //corresponding id from the HashMap in the appropriate location in a string array
-            pane.getChildren().forEach(node -> {
-                Iterator mapIter = nodes.entrySet().iterator();
-                while (mapIter.hasNext()) {
-                    Map.Entry i = (Map.Entry) mapIter.next();
-                    if (i.getValue().equals(node)) {
-                        locations[(GridPane.getColumnIndex(node) * 3) + GridPane.getRowIndex(node)] = (String) i.getKey();
-                    }
+            pane.getChildren().forEach(node ->{
+            Iterator mapIter = nodes.entrySet().iterator();
+            while(mapIter.hasNext()){
+                Map.Entry i = (Map.Entry) mapIter.next();
+                if(i.getValue().equals(node)){
+                    locations[(GridPane.getColumnIndex(node) * 3) + GridPane.getRowIndex(node)] = (String) i.getKey();
                 }
+            }
             });
         }
-
+        
         //Return the array of node ids
         public String[] getCells() {
             return locations;
